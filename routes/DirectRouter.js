@@ -4,6 +4,20 @@ const URLS = (process.env.URLS || '').split(',');
 const QUESTIONS = (process.env.QUESTIONS || '').split(',');
 const ANSWERS = (process.env.ANSWERS || '').split(',').map(str => str.toLowerCase());
 
+function getF(file, obj) {
+    return (req, res) => {
+        res.render(file, obj);
+    };
+}
+
+function postF(answer, route) {
+    return (req, res) => {
+        let r = (req.body.r || '').toLowerCase();
+        if(r === answer) res.redirect(route);
+        else res.redirect('/');
+    };
+}
+
 let i=0;
 let fromURL;
 let toURL;
@@ -25,15 +39,9 @@ URLS.forEach((url, i) => {
     let getFromFile = fromURL.startsWith('file:');
     if(getFromFile) fromURL = question.substr(5);
 
-    DirectRouter.get(from.route, (req, res) => {
-        res.render(getFromFile ? fromURL : 'index', {question: QUESTIONS[i], route: from.route});
-    });
+    DirectRouter.get(from.route, getF(getFromFile ? fromURL : 'index', {question: QUESTIONS[i], route: from.route}));
 
-    DirectRouter.post(from.route, (req, res) => {
-        let r = (req.body.r || '').toLowerCase();
-        if(r === ANSWERS[i]) res.redirect(i == URLS.length-1 ? 'coming-soon' : to.route);
-        else res.redirect('/');
-    });
+    DirectRouter.post(from.route, postF(ANSWERS[i], i == URLS.length-1 ? 'coming-soon' : to.route));
 });
 
 DirectRouter.get('/', (req, res) => {
