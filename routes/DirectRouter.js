@@ -20,11 +20,7 @@ URLS.forEach((url, i) => {
         route: '/' + Buffer.from(toURL).toString('base64')
     }
 
-    console.log(`Setting route: ${from.route} -> ${to.route}`);
-
-    if(i==0) {
-        DirectRouter.get('/', (req, res) => res.redirect(from.route));
-    }
+    console.log(`${i}: Setting route: ${from.route} -> ${to.route}`);
 
     let getFromFile = fromURL.startsWith('file:');
     if(getFromFile) fromURL = question.substr(5);
@@ -38,6 +34,11 @@ URLS.forEach((url, i) => {
         if(r === ANSWERS[i]) res.redirect(i == URLS.length-1 ? 'coming-soon' : to.route);
         else res.redirect('/');
     });
+});
+
+DirectRouter.get('/', (req, res) => {
+    let url = '/' + Buffer.from('index').toString('base64');
+    res.redirect(url);
 });
 
 DirectRouter.get('/coming-soon', (req, res) => res.render('index', {question: 'Coming soon...', route: '/coming-soon'}));
