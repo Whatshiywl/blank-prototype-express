@@ -1,4 +1,5 @@
 var DirectRouter = require('express').Router();
+var moment = require('moment');
 
 const URLS = (process.env.URLS || '').split(',');
 const QUESTIONS = (process.env.QUESTIONS || '').split(',');
@@ -10,11 +11,14 @@ function getF(file, obj) {
     };
 }
 
-function postF(answer, route) {
+function postF(answer, from, to) {
     return (req, res) => {
-        let r = (req.body.r || '').toLowerCase();
-        if(r === answer) res.redirect(route);
-        else res.redirect('/');
+        let r = (req.body.r || '').toLowerCase().trim();
+        let right = r === answer;
+        let timestamp = moment().format("DD/MM/YY HH:mm:ss");
+        console.log(timestamp, from, r, (right ? '=' : '!='), answer);
+        if(right) res.redirect(to);
+        else res.redirect(from);
     };
 }
 
@@ -41,7 +45,7 @@ URLS.forEach((url, i) => {
 
     DirectRouter.get(from.route, getF(getFromFile ? fromURL : 'index', {question: QUESTIONS[i], route: from.route}));
 
-    DirectRouter.post(from.route, postF(ANSWERS[i], i == URLS.length-1 ? 'coming-soon' : to.route));
+    DirectRouter.post(from.route, postF(ANSWERS[i], from.route, i == URLS.length-1 ? 'coming-soon' : to.route));
 });
 
 DirectRouter.get('/', (req, res) => {
