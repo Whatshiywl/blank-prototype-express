@@ -38,8 +38,7 @@ levelIds.forEach(id => {
 
     let level = levels[id];
     level.route = toRoute(level.url);
-
-    let successLevel = levels[level.success || (id+1)];
+    let successLevel = levels[level.success || Number(id)+1] || levels[99];
     successLevel.route = toRoute(successLevel.url);
 
     let errorLevel = levels[level.error || id];
