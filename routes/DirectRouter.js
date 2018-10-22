@@ -20,10 +20,12 @@ function getHandler(file, obj) {
 }
 
 function postHandler(answer, from, success, error) {
-    if(answer.startsWith('regex:')) answer = new RegExp(answer.substr(6));
+    answer = answer.toLowerCase().trim();
+    if(answer.startsWith('regex:')) answer = new RegExp(answer.substr(6), 'i');
     return (req, res) => {
         let r = (req.body.r || '').toLowerCase().trim();
-        let right = r.match(answer);
+        let match = r.match(answer);
+        let right = match && match[0] === r;
         let timestamp = moment().format("DD/MM/YY HH:mm:ss");
         console.log(timestamp, from, r, (right ? '=' : '!='), answer);
         if(right) res.redirect(success);
