@@ -1,7 +1,9 @@
 var DirectRouter = require('express').Router();
 var moment = require('moment');
 
-var settingService = require('../services/SettingService');
+var config = require('../services/SettingService').config;
+var levels = config.levels || [];
+var entry = config.entryPoint || 0;
 
 const URLS = (process.env.URLS || '').split(',');
 const QUESTIONS = (process.env.QUESTIONS || '').split(',');
@@ -11,55 +13,46 @@ function toRoute(url) {
     return '/' + Buffer.from(url).toString('base64');
 }
 
-function getF(file, obj) {
+function getHandler(file, obj) {
     return (req, res) => {
         res.render(file, obj);
     };
 }
 
-function postF(answer, from, to) {
+function postHandler(answer, from, success, error) {
+    if(answer.startsWith('regex:')) answer = new RegExp(answer.substr(6));
     return (req, res) => {
         let r = (req.body.r || '').toLowerCase().trim();
-        let right = r === answer;
+        let right = r.match(answer);
         let timestamp = moment().format("DD/MM/YY HH:mm:ss");
         console.log(timestamp, from, r, (right ? '=' : '!='), answer);
-        if(right) res.redirect(to);
-        else res.redirect(from);
+        if(right) res.redirect(success);
+        else res.redirect(error);
     };
 }
 
-URLS.forEach((url, i) => {
-    let fromURL = url.replace(/(_| )+/g, '-');
-    from = {
-        url: fromURL,
-        route: toRoute(fromURL)
-    }
+let levelIds = Object.keys(levels);
+levelIds.forEach(id => {
 
-    let toURL = (URLS[i+1] || 'coming-soon').replace(/(_| )+/g, '-');
-    to = {
-        url: toURL,
-        route: toRoute(toURL)
-    }
+    let level = levels[id];
+    level.route = toRoute(level.url);
 
-    console.log(`${i}: Setting route: ${from.route} -> ${to.route}`);
+    let successLevel = levels[level.success || (id+1)];
+    successLevel.route = toRoute(successLevel.url);
 
-    let getFromFile = fromURL.startsWith('file:');
-    if(getFromFile) fromURL = question.substr(5);
+    let errorLevel = levels[level.error || id];
+    errorLevel.route = toRoute(errorLevel.url);
 
-    DirectRouter.get(from.route, getF(getFromFile ? fromURL : 'index', {question: QUESTIONS[i], route: from.route}));
+    console.log(`${id}: Setting route: ${level.route} ? ${successLevel.route} : ${errorLevel.route}`);
 
-    DirectRouter.post(from.route, postF(ANSWERS[i], from.route, to.route));
+    DirectRouter.get(level.route, getHandler(level.file || 'index', level));
+
+    DirectRouter.post(level.route, postHandler(level.answer, level.route, successLevel.route, errorLevel.route));
 });
 
 DirectRouter.get('/', (req, res) => {
-    let url = toRoute(URLS[0]);
+    let url = toRoute(levels[entry].url);
     res.redirect(url);
 });
-
-let comingSoonRoute = toRoute('coming-soon');
-
-DirectRouter.get(comingSoonRoute, (req, res) => res.render('index', {question: 'Coming soon...', route: comingSoonRoute}));
-
-DirectRouter.post(comingSoonRoute, (req, res) => res.redirect(comingSoonRoute));
 
 module.exports = DirectRouter;
