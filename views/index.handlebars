@@ -6,3 +6,12 @@
     <input type="submit">
   </form>
 </div>
+
+<div>
+  {{#each leaderboard}}
+    <h1>{{this.key}}</h1>
+    {{#each this.ordered}}
+      {{this.user}}</br>
+    {{/each}}
+  {{/each}}
+</div>

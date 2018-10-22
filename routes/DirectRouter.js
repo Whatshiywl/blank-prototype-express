@@ -14,10 +14,22 @@ function toRoute(url) {
 
 var entryURL = toRoute(levels[entry].url);
 
-function getHandler(file, obj) {
+function getHandler(file, obj, id) {
     return (req, res) => {
         let token = req.query.token;
-        res.render(file, {...obj, ...{token}});
+        jwtService.decrypt(token)
+        .then(payload => {
+            let user = payload.user;
+            let score = leaderboard.getScore(user);
+            if(id > score && id < 99) {
+                leaderboard.setScore(user, id);
+            }
+            res.render(file, {...obj, ...{token, leaderboard: leaderboard.leaderboard}});
+        })
+        .catch(err => {
+            console.error(err);
+            res.redirect('/')
+        });
     };
 }
 
@@ -66,7 +78,7 @@ levelIds.forEach(id => {
 
     console.log(`${id}: Setting route: ${level.route} ? ${successLevel.route} : ${errorLevel.route}`);
 
-    DirectRouter.get(level.route, getHandler(level.file || 'index', level));
+    DirectRouter.get(level.route, getHandler(level.file || 'index', level, Number(id)));
 
     DirectRouter.post(level.route, postHandler(level.answer, level.route, successLevel.route, errorLevel.route));
 });
@@ -78,7 +90,8 @@ DirectRouter.get('/', (req, res) => {
 DirectRouter.get('/login', (req, res) => {
     res.render('index', {
         question: "Welcome to Blank\nPlease login",
-        route: "/login"
+        route: "/login",
+        leaderboard: leaderboard.leaderboard
     });
 });
 
