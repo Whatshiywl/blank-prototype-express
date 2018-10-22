@@ -5,17 +5,19 @@ var config = require('../services/SettingService').config;
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 
-const URLS = (process.env.URLS || '').split(',');
-const QUESTIONS = (process.env.QUESTIONS || '').split(',');
-const ANSWERS = (process.env.ANSWERS || '').split(',').map(str => str.toLowerCase());
+var leaderboard = require('../services/LeaderboardService');
+var jwtService = require('../services/JWTService');
 
 function toRoute(url) {
     return '/' + Buffer.from(url).toString('base64');
 }
 
+var entryURL = toRoute(levels[entry].url);
+
 function getHandler(file, obj) {
     return (req, res) => {
-        res.render(file, obj);
+        let token = req.query.token;
+        res.render(file, {...obj, ...{token}});
     };
 }
 
@@ -23,13 +25,31 @@ function postHandler(answer, from, success, error) {
     answer = answer.toLowerCase().trim();
     if(answer.startsWith('regex:')) answer = new RegExp(answer.substr(6), 'i');
     return (req, res) => {
-        let r = (req.body.r || '').toLowerCase().trim();
-        let match = r.match(answer);
-        let right = match && match[0] === r;
-        let timestamp = moment().format("DD/MM/YY HH:mm:ss");
-        console.log(timestamp, from, r, (right ? '=' : '!='), answer);
-        if(right) res.redirect(success);
-        else res.redirect(error);
+        let token = req.body.t;
+        if(!token) res.redirect('/');
+        else {
+            jwtService.decrypt(token)
+            .then(payload => {
+                leaderboard.getTokenForUser(payload.user)
+                .then(newToken => {
+                    let r = (req.body.r || '').toLowerCase().trim();
+                    let match = r.match(answer);
+                    let right = match && match[0] === r;
+                    let timestamp = moment().format("DD/MM/YY HH:mm:ss");
+                    console.log(timestamp, from, r, (right ? '=' : '!='), answer);
+                    if(right) res.redirect(`${success}?token=${newToken}`);
+                    else res.redirect(`${error}?token=${newToken}`);
+                })
+                .catch(err => {
+                    console.error(err);
+                    res.redirect(`${error}?token=${token}`)
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                res.redirect('/');
+            });
+        }
     };
 }
 
@@ -52,8 +72,21 @@ levelIds.forEach(id => {
 });
 
 DirectRouter.get('/', (req, res) => {
-    let url = toRoute(levels[entry].url);
-    res.redirect(url);
+    res.redirect('/login');
+});
+
+DirectRouter.get('/login', (req, res) => {
+    res.render('index', {
+        question: "Welcome to Blank\nPlease login",
+        route: "/login"
+    });
+});
+
+DirectRouter.post('/login', (req, res) => {
+    let user = (req.body.r || '').toLowerCase().trim();
+    leaderboard.getTokenForUser(user)
+    .then(token => res.redirect(`${entryURL}?token=${token}`))
+    .catch(err => res.render('error', err));
 });
 
 module.exports = DirectRouter;
