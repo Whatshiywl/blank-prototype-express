@@ -1,6 +1,8 @@
 var DirectRouter = require('express').Router();
 var moment = require('moment');
 
+var settingService = require('../services/SettingService');
+
 const URLS = (process.env.URLS || '').split(',');
 const QUESTIONS = (process.env.QUESTIONS || '').split(',');
 const ANSWERS = (process.env.ANSWERS || '').split(',').map(str => str.toLowerCase());
