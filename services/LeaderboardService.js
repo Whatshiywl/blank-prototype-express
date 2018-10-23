@@ -43,6 +43,16 @@ LeaderboardService.prototype.setScore = function(user, score) {
     this.update();
 }
 
+LeaderboardService.prototype.getUserData = function(user) {
+    let path = `/${user}`;
+    try {
+        let userData = this.users.getData(path);
+        return _.cloneDeep(userData);
+    } catch (error) {
+        return undefined;
+    }
+}
+
 LeaderboardService.prototype.deleteUser = function(user) {
     let path = `/${user}`;
     this.users.delete(path);
