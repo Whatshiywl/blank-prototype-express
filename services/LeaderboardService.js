@@ -43,13 +43,19 @@ LeaderboardService.prototype.setScore = function(user, score) {
     this.update();
 }
 
+LeaderboardService.prototype.deleteUser = function(user) {
+    let path = `/${user}`;
+    this.users.delete(path);
+    this.update();
+}
+
 LeaderboardService.prototype.update = function() {
-    let userData = this.users.getData('/');
+    let userData = _.cloneDeep(this.users.getData('/'));
     let groups = _.groupBy(userData, user => user.score);
     delete groups['-1'];
     let mapped = _.map(groups, (value, key) => {
         let ordered = _.map(_.orderBy(value, 'at'), item => {
-            item.at = moment(item.at).format('DD/MM/YY HH:mm:ss');
+            item.at = moment.utc(item.at).format('DD/MM/YY HH:mm:ss');
             return item;
         });
         return {ordered, key}
