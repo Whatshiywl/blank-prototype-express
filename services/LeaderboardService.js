@@ -59,6 +59,11 @@ LeaderboardService.prototype.deleteUser = function(user) {
     this.update();
 }
 
+LeaderboardService.prototype.getUserList = function() {
+    let users = _.cloneDeep(this.users.getData('/'));
+    return _.map(users, user => user.user);
+}
+
 LeaderboardService.prototype.update = function() {
     let userData = _.cloneDeep(this.users.getData('/'));
     let groups = _.groupBy(userData, user => user.score);
