@@ -2,6 +2,7 @@ var JsonDB = require('node-json-db');
 var _ = require('lodash');
 var moment = require('moment');
 var jwtService = require('./JWTService');
+var config = require('./SettingService').config;
 
 function LeaderboardService() {
     this.users = new JsonDB('./db/users');
@@ -31,7 +32,12 @@ LeaderboardService.prototype.getScore = function(user) {
 LeaderboardService.prototype.setScore = function(user, score) {
     let path = `/${user}`;
     let userData = this.users.getData(path);
-    userData.score = score;
+    let ignore = false;
+    (config.ignoreUserNames || []).forEach(toIgnore => {
+        if(toIgnore.startsWith('regex:')) toIgnore = new RegExp(toIgnore.substr(6), 'ig');
+        if(user.match(toIgnore)) ignore = true;
+    });
+    userData.score = ignore ? -1 : score;
     userData.at = Date.now();
     this.users.push(`/${user}`, userData);
     this.update();
@@ -40,8 +46,12 @@ LeaderboardService.prototype.setScore = function(user, score) {
 LeaderboardService.prototype.update = function() {
     let userData = this.users.getData('/');
     let groups = _.groupBy(userData, user => user.score);
+    delete groups['-1'];
     let mapped = _.map(groups, (value, key) => {
-        let ordered = _.orderBy(value, 'at');
+        let ordered = _.map(_.orderBy(value, 'at'), item => {
+            item.at = moment(item.at).format('DD/MM/YY HH:mm:ss');
+            return item;
+        });
         return {ordered, key}
     });
     let ordered = _.orderBy(mapped, 'key', 'desc');
