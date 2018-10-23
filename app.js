@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 var handlebars = require('express-handlebars');
 
 var DirectRouter = require('./routes/DirectRouter');
+var SecureRouter = require('./routes/SecureRouter');
 
 var app = express();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', DirectRouter);
+app.use('/secure', SecureRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
