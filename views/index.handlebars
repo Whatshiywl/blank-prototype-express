@@ -2,6 +2,17 @@
   {{question}}
   <form action="{{route}}" method="post">
     <input type="text" name="r" size="45">
+    <input type="hidden" name="t" value="{{token}}">
     <input type="submit">
   </form>
+</div>
+
+<div>
+  <h1>Leaderboard:</h1>
+  {{#each leaderboard}}
+    <h2>{{this.key}}</h2>
+    {{#each this.ordered}}
+      {{this.user}} at {{this.at}}</br>
+    {{/each}}
+  {{/each}}
 </div>
