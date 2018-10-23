@@ -37,4 +37,8 @@ SecureRouter.delete('/user', (req, res) => {
     }
 });
 
+SecureRouter.get('/users', (req, res) => {
+    res.send(leaderboardService.getUserList());
+});
+
 module.exports = SecureRouter;
