@@ -17,19 +17,22 @@ var entryURL = toRoute(levels[entry].url);
 function getHandler(file, obj, id) {
     return (req, res) => {
         let token = req.query.token;
-        jwtService.decrypt(token)
-        .then(payload => {
-            let user = payload.user;
-            let score = leaderboard.getScore(user);
-            if(id > score && id < 99) {
-                leaderboard.setScore(user, id);
-            }
-            res.render(file, {...obj, ...{token, leaderboard: leaderboard.leaderboard}});
-        })
-        .catch(err => {
-            // console.error(err);
-            res.redirect('/')
-        });
+        if(!token) res.redirect('/');
+        else {
+            jwtService.decrypt(token)
+            .then(payload => {
+                let user = payload.user;
+                let score = leaderboard.getScore(user);
+                if(id > score && id < 99) {
+                    leaderboard.setScore(user, id);
+                }
+                res.render(file, {...obj, ...{token, leaderboard: leaderboard.leaderboard}});
+            })
+            .catch(err => {
+                console.error(`GET Error:`, err.message);
+                res.redirect('/')
+            });
+        }
     };
 }
 
@@ -53,12 +56,12 @@ function postHandler(answer, from, success, error) {
                     else res.redirect(`${error}?token=${newToken}`);
                 })
                 .catch(err => {
-                    console.error(err);
-                    res.redirect(`${error}?token=${token}`)
+                    console.error(`POST TOKEN Error:`, err.message);
+                    res.redirect('/')
                 });
             })
             .catch(err => {
-                console.error(err);
+                console.error(`POST DECRYPT Error:`, err.message);
                 res.redirect('/');
             });
         }
