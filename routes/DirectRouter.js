@@ -27,7 +27,7 @@ function getHandler(file, obj, id) {
             res.render(file, {...obj, ...{token, leaderboard: leaderboard.leaderboard}});
         })
         .catch(err => {
-            console.error(err);
+            // console.error(err);
             res.redirect('/')
         });
     };
