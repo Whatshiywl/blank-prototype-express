@@ -49,6 +49,7 @@ SettingService.prototype.loadCrypted = function() {
         let bytes = AES.decrypt(ciphertext.toString(), this.KEY);
         let plaintext = bytes.toString(encoding);
         this.config = JSON.parse(plaintext);
+        fs.writeFileSync('./Config.json', JSON.stringify(this.config, null, 4));
     } catch(err) {
         console.log('No Crypted.lock');
     }
