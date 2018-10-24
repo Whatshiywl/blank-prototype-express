@@ -11,7 +11,7 @@ function LeaderboardService() {
 
 LeaderboardService.prototype.getTokenForUser = function(user, data) {
     let path = `/${user}`;
-    let userData = {user, score: 0, at: Date.now()};
+    let userData = {user, score: -1, at: Date.now()};
     try {
         userData = this.users.getData(path);
     } catch (error) {
@@ -76,6 +76,9 @@ LeaderboardService.prototype.update = function() {
         return {ordered, key}
     });
     let ordered = _.orderBy(mapped, 'key', 'desc');
+    let zero = ordered.find(el => el.key == '0');
+    zero.key = 'Newest';
+    zero.ordered = zero.ordered.reverse().slice(0, 10);
     this.leaderboard = ordered;
 }
 

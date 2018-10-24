@@ -1,5 +1,6 @@
 let fs = require('fs');
 let CryptoJS = require('crypto-js');
+let _ = require('lodash');
 let AES = CryptoJS.AES;
 let encoding = CryptoJS.enc.Utf8;
 
@@ -8,6 +9,16 @@ function SettingService() {
     this.loadConfig();
     if(!this.config) this.loadCrypted();
     if(!this.config) console.error('ERROR! NO CONFIG FOUND!');
+}
+
+SettingService.prototype.getIgnoredNames = function() {
+    return _.cloneDeep(this.config.ignoreUserNames || []);
+}
+
+SettingService.prototype.getForbiddenNames = function() {
+    let forbidden = _.cloneDeep(this.config.forbiddenUserNames || []);
+    _.forEach(this.config.levels, level => forbidden.push(level.answer));
+    return forbidden;
 }
 
 SettingService.prototype.getAESKey = function() {
@@ -49,6 +60,7 @@ SettingService.prototype.loadCrypted = function() {
         let bytes = AES.decrypt(ciphertext.toString(), this.KEY);
         let plaintext = bytes.toString(encoding);
         this.config = JSON.parse(plaintext);
+        fs.writeFileSync('./Config.json', JSON.stringify(this.config, null, 4));
     } catch(err) {
         console.log('No Crypted.lock');
     }

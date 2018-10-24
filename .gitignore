@@ -2,4 +2,3 @@ node_modules/*
 private-keys/*
 db/*
 Config.json
-scores.json
