@@ -1,10 +1,12 @@
 var DirectRouter = require('express').Router();
 var moment = require('moment');
+var _ = require('lodash');
 
 var config = require('../services/SettingService').config;
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 
+var settingService = require('../services/SettingService');
 var leaderboard = require('../services/LeaderboardService');
 var jwtService = require('../services/JWTService');
 
@@ -57,7 +59,7 @@ function postHandler(answer, from, success, error) {
                 })
                 .catch(err => {
                     console.error(`POST TOKEN Error:`, err.message);
-                    res.redirect('/')
+                    res.redirect(`${error}?token=${newToken}`);
                 });
             })
             .catch(err => {
@@ -100,9 +102,18 @@ DirectRouter.get('/login', (req, res) => {
 
 DirectRouter.post('/login', (req, res) => {
     let user = (req.body.r || '').toLowerCase().trim();
-    leaderboard.getTokenForUser(user)
-    .then(token => res.redirect(`${entryURL}?token=${token}`))
-    .catch(err => res.render('error', err));
+    let forbidden = settingService.getForbiddenNames();
+    forbidden.pop();
+    if(_.some(forbidden, name => {
+        if(name.startsWith('regex:')) name = new RegExp(name.substr(6), 'gi');
+        let match = user.match(name);
+        return match && match[0] === user;
+    })) res.redirect('/');
+    else {
+        leaderboard.getTokenForUser(user)
+        .then(token => res.redirect(`${entryURL}?token=${token}`))
+        .catch(err => res.render('error', err));
+    }
 });
 
 module.exports = DirectRouter;
