@@ -4,6 +4,21 @@
     <meta charset="utf-8">
     <title>Blank</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    {{#if token}}
+        <script>
+            let to = '{{route}}'.replace(/&#x3D;/g, '=');
+            localStorage.setItem('token', '{{token}}');
+            window.location.href = to;
+        </script>
+    {{/if}}
+    <script>
+        $(document).ready(() => {
+            let hidden = $('#hidden-token');
+            let token = localStorage.getItem('token');
+            hidden.val(token);
+        });
+    </script>
 </head>
 <body>
  

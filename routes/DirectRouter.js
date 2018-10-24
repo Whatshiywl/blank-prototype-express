@@ -19,7 +19,7 @@ var entryURL = toRoute(levels[entry].url);
 function getHandler(file, obj, id) {
     return (req, res) => {
         let token = req.query.token;
-        if(!token) res.redirect('/');
+        if(!token) res.render(file, {...obj, ...{leaderboard: leaderboard.leaderboard}});
         else {
             jwtService.decrypt(token)
             .then(payload => {
