@@ -77,8 +77,10 @@ LeaderboardService.prototype.update = function() {
     });
     let ordered = _.orderBy(mapped, 'key', 'desc');
     let zero = ordered.find(el => el.key == '0');
-    zero.key = 'Newest';
-    zero.ordered = zero.ordered.reverse().slice(0, 10);
+    if(zero) {
+        zero.key = 'Newest';
+        zero.ordered = zero.ordered.reverse().slice(0, 10);
+    }
     this.leaderboard = ordered;
 }
 
