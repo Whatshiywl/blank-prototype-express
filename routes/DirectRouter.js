@@ -77,7 +77,7 @@ levelIds.forEach(id => {
     level.route = toRoute(level.url);
     let successLevel = levels[level.success || Number(id)+1] || levels[99];
     successLevel.route = toRoute(successLevel.url);
-    if(id == 1) level.question = "#11 110 1V";
+    if(id == 1) level.question = "b1101V";
 
     let errorLevel = levels[level.error || id];
     errorLevel.route = toRoute(errorLevel.url);
