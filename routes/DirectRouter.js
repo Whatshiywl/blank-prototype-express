@@ -19,8 +19,11 @@ var entryURL = toRoute(levels[entry].url);
 function getHandler(file, obj, id) {
     return (req, res) => {
         let token = req.query.token;
-        if(!token) res.render(file, {...obj, ...{leaderboard: leaderboard.leaderboard}});
-        else {
+        if(!token) {
+            let leaders = leaderboard.getLeaderboard();
+            let newest = leaderboard.getNewest();
+            res.render(file, {...obj, ...{leaderboard: leaders, newest}});
+        } else {
             jwtService.decrypt(token)
             .then(payload => {
                 let user = payload.user;
@@ -28,7 +31,7 @@ function getHandler(file, obj, id) {
                 if(id > score && id < 99) {
                     leaderboard.setScore(user, id);
                 }
-                res.render(file, {...obj, ...{token, leaderboard: leaderboard.leaderboard}});
+                res.render(file, {...obj, ...{token}});
             })
             .catch(err => {
                 console.error(`GET Error:`, err.message);
@@ -77,7 +80,6 @@ levelIds.forEach(id => {
     level.route = toRoute(level.url);
     let successLevel = levels[level.success || Number(id)+1] || levels[99];
     successLevel.route = toRoute(successLevel.url);
-    if(id == 1) level.question = "b1101V";
 
     let errorLevel = levels[level.error || id];
     errorLevel.route = toRoute(errorLevel.url);
@@ -95,9 +97,10 @@ DirectRouter.get('/', (req, res) => {
 
 DirectRouter.get('/login', (req, res) => {
     res.render('index', {
-        question: "Welcome to Blank\nPlease login",
+        question: "Welcome to Blank</br>Please login",
         route: "/login",
-        leaderboard: leaderboard.leaderboard
+        leaderboard: leaderboard.getLeaderboard(),
+        newest: leaderboard.getNewest()
     });
 });
 
