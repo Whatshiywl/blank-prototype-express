@@ -85,13 +85,15 @@ LeaderboardService.prototype.update = function() {
 }
 
 LeaderboardService.prototype.getLeaderboard = function() {
-    let ret = _.cloneDeep(this.leaderboard);
+    let ret = _.cloneDeep(this.leaderboard || []);
     ret.pop();
     return ret;
 }
 
 LeaderboardService.prototype.getNewest = function() {
-    return _.cloneDeep(this.leaderboard).pop().ordered;
+    let newest = _.cloneDeep(this.leaderboard || []).pop();
+    if(newest) return newest.ordered;
+    else return '';
 }
 
 const leaderboardService = new LeaderboardService();
