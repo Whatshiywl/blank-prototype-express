@@ -25,9 +25,18 @@ h1 {
   margin: 0px;
 }
 
+/* For mobile */
 form {
-  width: 50%;
-  margin-left: 25%;
+  width: 100%;
+  margin-left: 0px;
+}
+
+@media only screen and (min-width: 768px) {
+  /* For desktop: */
+  form {
+    width: 50%;
+    margin-left: 25%;
+  }
 }
 
 input {

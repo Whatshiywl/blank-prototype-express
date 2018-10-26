@@ -82,7 +82,6 @@ LeaderboardService.prototype.update = function() {
         zero.ordered = zero.ordered.reverse().slice(0, 10);
     }
     this.leaderboard = ordered;
-    console.log(this.leaderboard);
 }
 
 LeaderboardService.prototype.getLeaderboard = function() {
