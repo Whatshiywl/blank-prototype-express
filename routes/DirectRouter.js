@@ -77,7 +77,6 @@ levelIds.forEach(id => {
     level.route = toRoute(level.url);
     let successLevel = levels[level.success || Number(id)+1] || levels[99];
     successLevel.route = toRoute(successLevel.url);
-    if(id == 1) level.question = "b1101V";
 
     let errorLevel = levels[level.error || id];
     errorLevel.route = toRoute(errorLevel.url);
@@ -95,7 +94,7 @@ DirectRouter.get('/', (req, res) => {
 
 DirectRouter.get('/login', (req, res) => {
     res.render('index', {
-        question: "Welcome to Blank\nPlease login",
+        question: "Welcome to Blank.</br>Please login.",
         route: "/login",
         leaderboard: leaderboard.leaderboard
     });
