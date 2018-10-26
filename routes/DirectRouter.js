@@ -94,7 +94,7 @@ DirectRouter.get('/', (req, res) => {
 
 DirectRouter.get('/login', (req, res) => {
     res.render('index', {
-        question: "Welcome to Blank.</br>Please login.",
+        question: "Welcome to Blank</br>Please login",
         route: "/login",
         leaderboard: leaderboard.leaderboard
     });

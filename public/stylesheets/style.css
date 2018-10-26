@@ -6,3 +6,47 @@ body {
 a {
   color: #00B7FF;
 }
+
+#main {
+  background-color: white;
+}
+
+p {
+  text-align: center;
+  padding: 10px 0px 10px 0px;
+  margin: 0px;
+  font-size: 24px;
+}
+
+form {
+  width: 50%;
+  margin-left: 25%;
+}
+
+input {
+  font-size: 24px;
+  width: 100%;
+  margin-left: 0px;
+  height: 50px;
+  border-radius: 25px;
+  border: 3px solid gray;
+  -moz-outline-radius: 10px;
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box; /* Firefox, other Gecko */
+  box-sizing: border-box; /* Opera/IE 8+ */
+  margin-bottom: 10px;
+  text-align: center;
+  outline: none;
+}
+
+input[type=submit] {
+  background-color: white; /* Green */
+  border-color: #4CAF50;
+  -webkit-transition-duration: 0.4s; /* Safari */
+  transition-duration: 0.4s;
+}
+
+input[type=submit]:hover {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
