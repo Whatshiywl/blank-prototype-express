@@ -7,12 +7,25 @@
   </form>
 </div>
 
-<div>
-  <h1>Leaderboard:</h1>
-  {{#each leaderboard}}
-    <h2>{{this.key}}</h2>
-    {{#each this.ordered}}
-      {{this.user}} at {{this.at}}</br>
-    {{/each}}
-  {{/each}}
+<div id="leaderboard">
+  <div id="leaders-wrapper">
+    <div id="leaders">
+      <h1>Leaderboard</h1>
+      {{#each leaderboard}}
+        <h2>{{this.key}}</h2>
+        {{#each this.ordered}}
+          {{this.user}} at {{this.at}}</br>
+        {{/each}}
+      {{/each}}
+    </div>
+  </div>
+
+  <div id="newest-wrapper">
+    <div id="newest">
+      <h1>Newest</h1>
+      {{#each newest}}
+        {{this.user}} at {{this.at}}</br>
+      {{/each}}
+    </div>
+  </div>
 </div>

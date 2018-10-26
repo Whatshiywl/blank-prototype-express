@@ -78,10 +78,21 @@ LeaderboardService.prototype.update = function() {
     let ordered = _.orderBy(mapped, 'key', 'desc');
     let zero = ordered.find(el => el.key == '0');
     if(zero) {
-        zero.key = 'Newest';
+        zero.key = 'Newestest';
         zero.ordered = zero.ordered.reverse().slice(0, 10);
     }
     this.leaderboard = ordered;
+    console.log(this.leaderboard);
+}
+
+LeaderboardService.prototype.getLeaderboard = function() {
+    let ret = _.cloneDeep(this.leaderboard);
+    ret.pop();
+    return ret;
+}
+
+LeaderboardService.prototype.getNewest = function() {
+    return _.cloneDeep(this.leaderboard).pop().ordered;
 }
 
 const leaderboardService = new LeaderboardService();
