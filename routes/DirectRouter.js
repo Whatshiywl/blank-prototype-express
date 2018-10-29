@@ -2,7 +2,7 @@ var DirectRouter = require('express').Router();
 var moment = require('moment');
 var _ = require('lodash');
 
-var config = require('../services/SettingService').config;
+var config = require('../services/SettingService').getConfig();
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 

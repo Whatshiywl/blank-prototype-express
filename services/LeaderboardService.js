@@ -3,44 +3,51 @@ var _ = require('lodash');
 var moment = require('moment');
 var jwtService = require('./JWTService');
 var config = require('./SettingService').config;
+var mongoService = require('./MongoService');
 
 function LeaderboardService() {
     this.users = new JsonDB('./db/users');
     this.update();
+    mongoService.createUser('Whatshiywl').then(() => {
+        console.log('user created');
+    })
+    .catch(console.error)
+    .then(() => this.setScore('Whatshiywl', 10).catch(console.error))
+    .then(() => this.getTokenForUser('Whatshiywl').then(console.log).catch(console.error))
+    .then(() => this.getScore('Whatshiywl').then(console.log).catch(console.error))
+    .catch(console.error);
 }
 
-LeaderboardService.prototype.getTokenForUser = function(user, data) {
-    let path = `/${user}`;
-    let userData = {user, score: -1, at: Date.now()};
-    try {
-        userData = this.users.getData(path);
-    } catch (error) {
-        this.users.push(path, userData);
-    }
-    let payload = {...{user}, ...data};
-    return jwtService.encrypt(payload, {
-        expiresIn: '1h'
+LeaderboardService.prototype.getTokenForUser = function(name, data) {
+    return new Promise((resolve, reject) => {
+        mongoService.getUser(name)
+        .then(user => {
+            let payload = {...{user}, ...data};
+            resolve(jwtService.encrypt(payload, {
+                expiresIn: '1h'
+            }));
+        })
+        .catch(reject);
     });
-
 }
 
-LeaderboardService.prototype.getScore = function(user) {
-    let path = `/${user}`;
-    return this.users.getData(path).score;
-}
-
-LeaderboardService.prototype.setScore = function(user, score) {
-    let path = `/${user}`;
-    let userData = this.users.getData(path);
-    let ignore = false;
-    (config.ignoreUserNames || []).forEach(toIgnore => {
-        if(toIgnore.startsWith('regex:')) toIgnore = new RegExp(toIgnore.substr(6), 'ig');
-        if(user.match(toIgnore)) ignore = true;
+LeaderboardService.prototype.getScore = function(name) {
+    return new Promise((resolve, reject) => {
+        mongoService.getUser(name)
+        .then(user => resolve(user.score))
+        .catch(reject);
     });
-    userData.score = ignore ? -1 : score;
-    userData.at = Date.now();
-    this.users.push(`/${user}`, userData);
-    this.update();
+}
+
+LeaderboardService.prototype.setScore = function(name, score) {
+    return new Promise((resolve, reject) => {
+        mongoService.updateUser(name, {$set: {score}})
+        .then(() => {
+            // this.update();
+            resolve();
+        })
+        .catch(reject);
+    });
 }
 
 LeaderboardService.prototype.getUserData = function(user) {
