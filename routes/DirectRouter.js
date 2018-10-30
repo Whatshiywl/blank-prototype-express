@@ -76,7 +76,7 @@ function postHandler(answer, from, success, error) {
                 });
             })
             .catch(error => {
-                console.error(`POST DECRYPT Error:`, err.message);
+                console.error(`POST DECRYPT Error:`, error.message);
                 res.redirect('/');
             });
         }
