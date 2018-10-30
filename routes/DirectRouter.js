@@ -2,7 +2,7 @@ var DirectRouter = require('express').Router();
 var moment = require('moment');
 var _ = require('lodash');
 
-var config = require('../services/SettingService').config;
+var config = require('../services/SettingService').getConfig();
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 
@@ -18,23 +18,33 @@ var entryURL = toRoute(levels[entry].url);
 
 function getHandler(file, obj, id) {
     return (req, res) => {
+        const respondWith = o => {
+            res.render(file, {...obj, ...o});
+        }
+
         let token = req.query.token;
         if(!token) {
-            let leaders = leaderboard.getLeaderboard();
-            let newest = leaderboard.getNewest();
-            res.render(file, {...obj, ...{leaderboard: leaders, newest}});
+            leaderboard.getLeaderboard()
+            .then(lead => {
+                respondWith({leaderboard: lead.leaders, newest: lead.newest});
+            })
+            .catch(error => res.render('error', {error}));
         } else {
             jwtService.decrypt(token)
             .then(payload => {
-                let user = payload.user;
-                let score = leaderboard.getScore(user);
-                if(id > score && id < 99) {
-                    leaderboard.setScore(user, id);
-                }
-                res.render(file, {...obj, ...{token}});
+                let name = payload.user.name;
+                leaderboard.getScore(name)
+                .then(score => {
+                    if(id > score && id < 99) {
+                        leaderboard.setScore(name, id)
+                        .then(() => respondWith({token}))
+                        .catch(error => res.render('error', {error}));
+                    } else respondWith({token});
+                })
+                .catch(error => res.render('error', {error}));
             })
-            .catch(err => {
-                console.error(`GET Error:`, err.message);
+            .catch(error => {
+                console.error(`GET Error:`, error.message);
                 res.redirect('/')
             });
         }
@@ -50,7 +60,7 @@ function postHandler(answer, from, success, error) {
         else {
             jwtService.decrypt(token)
             .then(payload => {
-                leaderboard.getTokenForUser(payload.user)
+                leaderboard.getTokenForUser(payload.user.name)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
@@ -60,12 +70,12 @@ function postHandler(answer, from, success, error) {
                     if(right) res.redirect(`${success}?token=${newToken}`);
                     else res.redirect(`${error}?token=${newToken}`);
                 })
-                .catch(err => {
+                .catch(error => {
                     console.error(`POST TOKEN Error:`, err.message);
                     res.redirect(`${error}?token=${newToken}`);
                 });
             })
-            .catch(err => {
+            .catch(error => {
                 console.error(`POST DECRYPT Error:`, err.message);
                 res.redirect('/');
             });
@@ -96,27 +106,25 @@ DirectRouter.get('/', (req, res) => {
 });
 
 DirectRouter.get('/login', (req, res) => {
-    res.render('index', {
-        question: "Welcome to Blank</br>Please login",
-        route: "/login",
-        leaderboard: leaderboard.getLeaderboard(),
-        newest: leaderboard.getNewest()
-    });
+    leaderboard.getLeaderboard()
+    .then(lead => {
+        res.render('index', {
+            question: "Welcome to Blank</br>Please login",
+            route: "/login",
+            leaderboard: lead.leaders,
+            newest: lead.newest
+        });
+    })
+    .catch(error => res.render('error', {error}));
 });
 
 DirectRouter.post('/login', (req, res) => {
-    let user = (req.body.r || '').toLowerCase().trim();
-    let forbidden = settingService.getForbiddenNames();
-    forbidden.pop();
-    if(_.some(forbidden, name => {
-        if(name.startsWith('regex:')) name = new RegExp(name.substr(6), 'gi');
-        let match = user.match(name);
-        return match && match[0] === user;
-    })) res.redirect('/');
+    let name = (req.body.r || '').toLowerCase().trim();
+    if(settingService.isForbiddenName(name)) res.redirect('/');
     else {
-        leaderboard.getTokenForUser(user)
+        leaderboard.login(name)
         .then(token => res.redirect(`${entryURL}?token=${token}`))
-        .catch(err => res.render('error', err));
+        .catch(error => res.render('error', {error}));
     }
 });
 
