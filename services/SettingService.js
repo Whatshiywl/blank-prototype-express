@@ -22,10 +22,30 @@ SettingService.prototype.getIgnoredNames = function() {
     return _.cloneDeep(config.ignoreUserNames || []);
 }
 
+SettingService.prototype.isIgnoredName = function(name) {
+    name = name.toLowerCase().trim();
+    let isIgnored = false;
+    this.getIgnoredNames().forEach(ignored => {
+        if(ignored.startsWith('regex:')) ignored = new RegExp(ignored.substr(6));
+        if(name.match(ignored)) isIgnored = true;
+    });
+    return isIgnored;
+}
+
 SettingService.prototype.getForbiddenNames = function() {
     let forbidden = _.cloneDeep(config.forbiddenUserNames || []);
     _.forEach(config.levels, level => forbidden.push(level.answer));
     return forbidden;
+}
+
+SettingService.prototype.isForbiddenName = function(name) {
+    name = name.toLowerCase().trim();
+    let isForbidden = false;
+    this.getForbiddenNames().forEach(forbidden => {
+        if(forbidden.startsWith('regex:')) forbidden = new RegExp(forbidden.substr(6), 'gi');
+        if(name.match(forbidden)) isForbidden = true;
+    });
+    return isForbidden;
 }
 
 function getAESKey() {
@@ -40,11 +60,10 @@ function getAESKey() {
 }
 
 function loadConfig() {
-    console.log('Loading Config.json')
-    config;
+    console.log('Loading Config.json');
     try {
         config = require('../Config.json');
-        this.encrypt();
+        encrypt();
     } catch(err) {
         console.log('No Config.json!');
     }

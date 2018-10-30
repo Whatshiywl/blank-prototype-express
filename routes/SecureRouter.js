@@ -2,6 +2,7 @@ var SecureRouter = require('express').Router();
 var fs = require('fs');
 
 var leaderboardService = require('../services/LeaderboardService');
+var mongoService = require('../services/MongoService');
 
 var KEY = process.env.ACCESS_KEY;
 if(!KEY) {
@@ -19,26 +20,26 @@ SecureRouter.use('/', (req, res, next) => {
 });
 
 SecureRouter.get('/user', (req, res) => {
-    let user = req.query.user;
-    let userData = leaderboardService.getUserData(user);
-    res.send(userData);
+    let name = req.query.user;
+    mongoService.getUser(name)
+    .then(user => res.send(user))
+    .catch(error => res.status(500).send(error));
 });
 
 SecureRouter.delete('/user', (req, res) => {
     let user = req.body.user;
     if(!user) res.status(404).send('User not given');
     else {
-        try {
-            leaderboardService.deleteUser(user);
-            res.send('ok');
-        } catch (err) {
-            res.status(400).send(err);
-        }
+        mongoService.deleteUser(name)
+        .then(() => res.send('ok'))
+        .catch(error => res.status(500).send(error));
     }
 });
 
 SecureRouter.get('/users', (req, res) => {
-    res.send(leaderboardService.getUserList());
+    mongoService.getUsers()
+    .then(users => res.send(users.map(user => user.name)))
+    .catch(error => res.status(500).send(error));
 });
 
 module.exports = SecureRouter;
