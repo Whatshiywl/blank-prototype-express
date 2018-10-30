@@ -27,10 +27,10 @@ var mongoSettings = settingService.getConfig().mongoSettings;
 //   }
 // ];
 
-// // Standard URI format: mongodb://[dbuser:dbpassword@]host:port/dbname
-// let uri = `mongodb://${mongoSettings.user}:${mongoSettings.pass}@${mongoSettings.host}:${mongoSettings.port}/${mongoSettings.daba}`;
+// Standard URI format: mongodb://[dbuser:dbpassword@]host:port/dbname
+let uri = `mongodb://${mongoSettings.user}:${mongoSettings.pass}@${mongoSettings.host}:${mongoSettings.port}/${mongoSettings.daba}`;
 
-// var client;
+var client;
 
 // mongodb.MongoClient.connect(uri, {useNewUrlParser: true}, function(err, client) {
 

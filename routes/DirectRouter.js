@@ -17,33 +17,34 @@ function toRoute(url) {
 var entryURL = toRoute(levels[entry].url);
 
 function getHandler(file, obj, id) {
-    const respondWith = o => {
-        res.render(file, {...obj, ...o});
-    }
     return (req, res) => {
+        const respondWith = o => {
+            res.render(file, {...obj, ...o});
+        }
+
         let token = req.query.token;
         if(!token) {
             leaderboard.getLeaderboard()
             .then(lead => {
                 respondWith({leaderboard: lead.leaders, newest: lead.newest});
             })
-            .catch(error => res.status(500).send(error));
+            .catch(error => res.render('error', {error}));
         } else {
             jwtService.decrypt(token)
             .then(payload => {
-                let name = payload.name;
+                let name = payload.user.name;
                 leaderboard.getScore(name)
                 .then(score => {
                     if(id > score && id < 99) {
                         leaderboard.setScore(name, id)
                         .then(() => respondWith({token}))
-                        .catch(error => res.status(500).error(error));
+                        .catch(error => res.render('error', {error}));
                     } else respondWith({token});
                 })
-                .catch(error => res.status(500).error(error));
+                .catch(error => res.render('error', {error}));
             })
-            .catch(err => {
-                console.error(`GET Error:`, err.message);
+            .catch(error => {
+                console.error(`GET Error:`, error.message);
                 res.redirect('/')
             });
         }
@@ -59,7 +60,7 @@ function postHandler(answer, from, success, error) {
         else {
             jwtService.decrypt(token)
             .then(payload => {
-                leaderboard.getTokenForUser(payload.user)
+                leaderboard.getTokenForUser(payload.user.name)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
@@ -69,12 +70,12 @@ function postHandler(answer, from, success, error) {
                     if(right) res.redirect(`${success}?token=${newToken}`);
                     else res.redirect(`${error}?token=${newToken}`);
                 })
-                .catch(err => {
+                .catch(error => {
                     console.error(`POST TOKEN Error:`, err.message);
                     res.redirect(`${error}?token=${newToken}`);
                 });
             })
-            .catch(err => {
+            .catch(error => {
                 console.error(`POST DECRYPT Error:`, err.message);
                 res.redirect('/');
             });
@@ -114,22 +115,16 @@ DirectRouter.get('/login', (req, res) => {
             newest: lead.newest
         });
     })
-    .catch(error => res.status(500).send(error));
+    .catch(error => res.render('error', {error}));
 });
 
 DirectRouter.post('/login', (req, res) => {
     let name = (req.body.r || '').toLowerCase().trim();
-    let forbidden = settingService.getForbiddenNames();
-    forbidden.pop();
-    if(_.some(forbidden, name => {
-        if(name.startsWith('regex:')) name = new RegExp(name.substr(6), 'gi');
-        let match = name.match(name);
-        return match && match[0] === name;
-    })) res.redirect('/');
+    if(settingService.isForbiddenName(name)) res.redirect('/');
     else {
         leaderboard.login(name)
         .then(token => res.redirect(`${entryURL}?token=${token}`))
-        .catch(err => res.render('error', err));
+        .catch(error => res.render('error', {error}));
     }
 });
 

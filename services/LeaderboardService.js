@@ -60,8 +60,9 @@ LeaderboardService.prototype.getScore = function(name) {
 
 LeaderboardService.prototype.setScore = function(name, score) {
     if(settingService.isIgnoredName(name)) score = -1;
+    let at = Date.now();
     return new Promise((resolve, reject) => {
-        mongoService.updateUser(name, {$set: {score}})
+        mongoService.updateUser(name, {$set: {score, at}})
         .then(() => {
             resolve();
         })
@@ -76,9 +77,9 @@ LeaderboardService.prototype.getLeaderboard = function() {
             let scoredUsers = users.filter(user => user.score > 0);
             let groups = _.groupBy(scoredUsers, user => user.score);
             let mapped = _.map(groups, (group, key) => {
-                let ordered = _.map(_.orderBy(group, 'at'), item => {
-                    item.at = moment.utc(item.at).format('DD/MM/YY HH:mm:ss');
-                    return item;
+                let ordered = _.map(_.orderBy(group, 'at'), user => {
+                    user.at = moment.utc(user.at).format('DD/MM/YY HH:mm:ss');
+                    return user;
                 });
                 return {ordered, key}
             });
@@ -86,8 +87,8 @@ LeaderboardService.prototype.getLeaderboard = function() {
 
             let zeroUsers = users.filter(user => user.score == 0);
             let newest = _.map(_.orderBy(zeroUsers, 'at', 'desc'), user => {
-                item.at = moment.utc(item.at).format('DD/MM/YY HH:mm:ss');
-                return item;
+                user.at = moment.utc(user.at).format('DD/MM/YY HH:mm:ss');
+                return user;
             });
             resolve({leaders, newest});
         })

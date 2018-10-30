@@ -23,7 +23,7 @@ SecureRouter.get('/user', (req, res) => {
     let name = req.query.user;
     mongoService.getUser(name)
     .then(user => res.send(user))
-    .catch(error => res.status(500).send(error));
+    .catch(error => res.render('error', {error}));
 });
 
 SecureRouter.delete('/user', (req, res) => {
@@ -32,14 +32,14 @@ SecureRouter.delete('/user', (req, res) => {
     else {
         mongoService.deleteUser(name)
         .then(() => res.send('ok'))
-        .catch(error => res.status(500).send(error));
+        .catch(error => res.render('error', {error}));
     }
 });
 
 SecureRouter.get('/users', (req, res) => {
     mongoService.getUsers()
     .then(users => res.send(users.map(user => user.name)))
-    .catch(error => res.status(500).send(error));
+    .catch(error => res.render('error', {error}));
 });
 
 module.exports = SecureRouter;
