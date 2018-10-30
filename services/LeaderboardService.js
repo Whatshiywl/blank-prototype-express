@@ -1,22 +1,10 @@
-var JsonDB = require('node-json-db');
 var _ = require('lodash');
 var moment = require('moment');
 var jwtService = require('./JWTService');
 var settingService = require('./SettingService');
 var mongoService = require('./MongoService');
 
-function LeaderboardService() {
-    this.users = new JsonDB('./db/users');
-    // this.update();
-    // mongoService.createUser('Whatshiywl').then(() => {
-    //     console.log('user created');
-    // })
-    // .catch(console.error)
-    // .then(() => this.setScore('Whatshiywl', 10).catch(console.error))
-    // this.login('Whatshiywl').then(console.log).catch(console.error)
-    // .then(() => this.getScore('Whatshiywl').then(console.log).catch(console.error))
-    // .catch(console.error);
-}
+function LeaderboardService() {}
 
 LeaderboardService.prototype.login = function(name) {
     return new Promise((resolve, reject) => {

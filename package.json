@@ -18,7 +18,6 @@
     "moment": "*",
     "mongodb": "^3.1.8",
     "morgan": "~1.9.0",
-    "node-json-db": "^0.9.1",
     "serve-favicon": "~2.4.5"
   },
   "devDependencies": {
