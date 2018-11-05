@@ -60,13 +60,14 @@ function postHandler(answer, from, success, error) {
         else {
             jwtService.decrypt(token)
             .then(payload => {
-                leaderboard.getTokenForUser(payload.user.name)
+                let userName = payload.user.name;
+                leaderboard.getTokenForUser(userName)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
                     let right = match && match[0] === r;
                     let timestamp = moment().format("DD/MM/YY HH:mm:ss");
-                    console.log(timestamp, from, r, (right ? '=' : '!='), answer);
+                    console.log(userName, from, r, (right ? '=' : '!='), answer);
                     if(right) res.redirect(`${success}?token=${newToken}`);
                     else res.redirect(`${error}?token=${newToken}`);
                 })
