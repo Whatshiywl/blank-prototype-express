@@ -2,6 +2,10 @@
   "name": "blank-prototype",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": "8.9.4",
+    "npm": "6.2.0"
+  },
   "scripts": {
     "start": "node ./bin/www",
     "dev": "NODE_ENV=dev node ./bin/www"
