@@ -5,11 +5,15 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var handlebars = require('express-handlebars');
+var cors = require('cors');
 
 var DirectRouter = require('./routes/DirectRouter');
+var DefaultRouter = require('./routes/DefaultRouter');
 var SecureRouter = require('./routes/SecureRouter');
 
 var app = express();
+
+app.use(cors());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -24,7 +28,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', DirectRouter);
+// app.use('/', DirectRouter);
+app.use('/', DefaultRouter);
 app.use('/secure', SecureRouter);
 
 // catch 404 and forward to error handler
