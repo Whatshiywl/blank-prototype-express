@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// app.use('/', DirectRouter);
+app.use('/', DirectRouter);
 app.use('/', DefaultRouter);
 app.use('/secure', SecureRouter);
 

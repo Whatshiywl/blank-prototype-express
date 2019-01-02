@@ -1,6 +1,6 @@
 var DefaultRouter = require('express').Router();
 
-DefaultRouter.get('/', (req, res) => {
+DefaultRouter.get('/hello', (req, res) => {
     res.send('hello world');
 });
 
