@@ -6,38 +6,6 @@ var mongoService = require('./MongoService');
 
 function LeaderboardService() {}
 
-LeaderboardService.prototype.login = function(name) {
-    return new Promise((resolve, reject) => {
-        
-        const getTokenAndResolve = () => {
-            this.getTokenForUser(name)
-            .then(resolve).catch(reject);
-        }
-
-        mongoService.userExists(name)
-        .then(exists => {
-            if(!exists) mongoService.createUser(name)
-                .then(getTokenAndResolve)
-                .catch(reject);
-            else getTokenAndResolve();
-        })
-        .catch(reject);
-    });
-}
-
-LeaderboardService.prototype.getTokenForUser = function(name, data) {
-    return new Promise((resolve, reject) => {
-        mongoService.getUser(name)
-        .then(user => {
-            let payload = {...{user}, ...data};
-            resolve(jwtService.encrypt(payload, {
-                expiresIn: '1h'
-            }));
-        })
-        .catch(reject);
-    });
-}
-
 LeaderboardService.prototype.getScore = function(name) {
     return new Promise((resolve, reject) => {
         mongoService.getUser(name)
