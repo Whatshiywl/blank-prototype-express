@@ -9,6 +9,7 @@ var entry = config.entryPoint || 0;
 var settingService = require('../services/SettingService');
 var leaderboard = require('../services/LeaderboardService');
 var jwtService = require('../services/JWTService');
+var authService = require('../services/AuthService');
 
 function toRoute(url) {
     return '/' + Buffer.from(url).toString('base64');
@@ -61,7 +62,7 @@ function postHandler(answer, from, success, error) {
             jwtService.decrypt(token)
             .then(payload => {
                 let userName = payload.user.name;
-                leaderboard.getTokenForUser(userName)
+                authService.getTokenForUser(userName)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
@@ -123,7 +124,7 @@ DirectRouter.post('/login', (req, res) => {
     let name = (req.body.r || '').toLowerCase().trim();
     if(settingService.isForbiddenName(name)) res.redirect('/');
     else {
-        leaderboard.login(name)
+        authService.login({name})
         .then(token => res.redirect(`${entryURL}?token=${token}`))
         .catch(error => res.render('error', {error}));
     }

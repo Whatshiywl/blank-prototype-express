@@ -40,7 +40,7 @@ SettingService.prototype.getForbiddenNames = function() {
 }
 
 SettingService.prototype.isForbiddenName = function(name) {
-    name = name.toLowerCase().trim();
+    name = (name || '').toLowerCase().trim();
     let isForbidden = false;
     this.getForbiddenNames().forEach(forbidden => {
         if(forbidden.startsWith('regex:')) forbidden = new RegExp(forbidden.substr(6), 'gi');

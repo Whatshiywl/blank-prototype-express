@@ -147,8 +147,8 @@ MongoService.prototype.createUser = function(name) {
     };
     return new Promise((resolve, reject) => {
         this.userExists(name)
-        .then(exists => {
-            if(exists) reject('User already exists');
+        .then(data => {
+            if(data.exists) reject('User already exists');
             else {
                 this.getCollection(this.USER_COLLECTION)
                 .then(users => resolve(users.insertOne(user)))
@@ -204,11 +204,14 @@ MongoService.prototype.updateUser = function(name, query) {
 }
 
 MongoService.prototype.userExists = function(name) {
-    name = name.toLowerCase().trim();
+    name = (name || '').toLowerCase().trim();
     return new Promise((resolve, reject) => {
         this.getUser(name)
-        .then(user => resolve(Boolean(user)))
-        .catch(error => error == 'User doesnt exist' ? resolve(false) : reject(error));
+        .then(user => resolve({
+            exists: Boolean(user),
+            password: Boolean(user.password)
+        }))
+        .catch(error => error == 'User doesnt exist' ? resolve({exists: false, password: false}) : reject(error));
     });
 }
 
