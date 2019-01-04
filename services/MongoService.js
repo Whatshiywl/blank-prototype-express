@@ -135,40 +135,46 @@ MongoService.prototype.getCollection = function(collection) {
     });
 }
 
-MongoService.prototype.createUser = function(name) {
-    name = name.toLowerCase().trim();
-    let now = Date.now();
-    let user = {
-        _id: name,
-        name,
-        score: settingService.isIgnoredName(name) ? -1 : 0,
-        at: now,
-        last: now
-    };
+MongoService.prototype.createUser = function(credentials) {
     return new Promise((resolve, reject) => {
-        this.userExists(name)
-        .then(data => {
-            if(data.exists) reject('User already exists');
-            else {
-                this.getCollection(this.USER_COLLECTION)
-                .then(users => resolve(users.insertOne(user)))
-                .catch(reject);
-            }
-        })
-        .catch(reject);
+        if(!credentials || !credentials.username) reject({err: 'Invalid credentials!'});
+        else {
+            let username = credentials.username.toLowerCase().trim();
+            let now = Date.now();
+            let user = {
+                _id: username,
+                username: username,
+                password: credentials.password,
+                score: settingService.isIgnoredName(username) ? -1 : 0,
+                answers: [],
+                current: '',
+                at: now,
+                last: now
+            };
+            this.userExists(username)
+            .then(data => {
+                if(data.exists) reject('User already exists');
+                else {
+                    this.getCollection(this.USER_COLLECTION)
+                    .then(users => resolve(users.insertOne(user)))
+                    .catch(reject);
+                }
+            })
+            .catch(reject);
+        }
     });
 }
 
-MongoService.prototype.getUser = function(name) {
-    name = name.toLowerCase().trim();
+MongoService.prototype.getUser = function(username) {
+    username = username.toLowerCase().trim();
     let now = Date.now();
     return new Promise((resolve, reject) => {
         this.getCollection(this.USER_COLLECTION)
-        .then(users => users.findOne({_id: name})
+        .then(users => users.findOne({_id: username})
             .then(user => {
                 if(!user) reject('User doesnt exist');
                 else {
-                    users.updateOne({_id: name}, {$set: {last: now}})
+                    users.updateOne({_id: username}, {$set: {last: now}})
                     .then(() => resolve(user))
                     .catch(reject);
                 }
@@ -190,13 +196,13 @@ MongoService.prototype.getUsers = function(filter) {
     });
 }
 
-MongoService.prototype.updateUser = function(name, query) {
-    name = name.toLowerCase().trim();
+MongoService.prototype.updateUser = function(username, query) {
+    username = username.toLowerCase().trim();
     let now = Date.now();
     return new Promise((resolve, reject) => {
         this.getCollection(this.USER_COLLECTION)
         .then(users => {
-            users.updateOne({_id: name}, _.defaultsDeep({$set: {last: now}}, query))
+            users.updateOne({_id: username}, _.defaultsDeep({$set: {last: now}}, query))
             .then(resolve).catch(reject);
         })
         .catch(reject);
