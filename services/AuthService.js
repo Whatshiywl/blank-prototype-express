@@ -24,6 +24,8 @@ AuthService.prototype.validadeCredentials = function(credentials) {
 AuthService.prototype.login = function(credentials) {
     let username = credentials.username;
     return new Promise((resolve, reject) => {
+
+        if(!credentials || !credentials.username) reject({err: 'Invalid credentials!'});
         
         const getTokenAndResolve = () => {
             this.getTokenForUser(username)
@@ -32,13 +34,17 @@ AuthService.prototype.login = function(credentials) {
 
         mongoService.userExists(username)
         .then(data => {
-            if(!data.exists) mongoService.createUser(username)
+            if(!data.exists) {
+                credentials.password = hashPassword(credentials.hash);
+                mongoService.createUser(credentials)
                 .then(getTokenAndResolve)
                 .catch(reject);
-            else if(!data.password) getTokenAndResolve();
-            else this.validadeCredentials(credentials)
+            } else if(!data.password) getTokenAndResolve();
+            else {
+                this.validadeCredentials(credentials)
                 .then(getTokenAndResolve)
                 .catch(reject);
+            }
         })
         .catch(reject);
     });
@@ -48,7 +54,7 @@ AuthService.prototype.getTokenForUser = function(name, data) {
     return new Promise((resolve, reject) => {
         mongoService.getUser(name)
         .then(user => {
-            user = _.omit(user, 'password');
+            user = _.pick(user, ['username']);
             let payload = {...{user}, ...data};
             resolve(jwtService.encrypt(payload, {
                 expiresIn: '1d'

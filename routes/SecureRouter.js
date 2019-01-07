@@ -38,7 +38,7 @@ SecureRouter.delete('/user', (req, res) => {
 
 SecureRouter.get('/users', (req, res) => {
     mongoService.getUsers()
-    .then(users => res.send(users.map(user => user.name)))
+    .then(users => res.send(users.map(user => user.username)))
     .catch(error => res.render('error', {error}));
 });
 
