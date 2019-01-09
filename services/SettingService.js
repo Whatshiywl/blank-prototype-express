@@ -34,7 +34,12 @@ SettingService.prototype.isIgnoredName = function(name) {
 
 SettingService.prototype.getForbiddenNames = function() {
     let forbidden = _.cloneDeep(config.forbiddenUserNames || []);
-    _.forEach(config.levels, level => forbidden.push(level.answer));
+    _.forIn(config.levels, level => {
+        _.forEach(level.answers, answer => {
+            if(answer.answer)
+                forbidden.push(answer.answer);
+        });
+    });
     forbidden.pop();
     return forbidden;
 }

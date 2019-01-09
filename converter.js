@@ -1,5 +1,6 @@
-let graph = require('./graph.json');
+let graph = require('./graph-importer/graph.json');
 let fs = require('fs');
+let _ = require('lodash');
 
 if(!graph) {
     console.log('No graph found!');
@@ -19,12 +20,17 @@ graph.nodes.forEach(node => {
 
 graph.edges.forEach(edge => {
     let from = levels[edge.source];
-    from.answers.push({
+    let a = {
         answer: edge.label, 
         target: edge.target,
         order: edge.attributes.Order,
         query: edge.attributes.Query
+    };
+    _.forIn(edge.attributes, (value, key) => {
+        if(key.startsWith('queries')) value = JSON.parse(value);
+        _.set(a, key, value);
     });
+    from.answers.push(a);
 });
 
 fs.writeFileSync('levels.json', JSON.stringify(levels, null, 4));
