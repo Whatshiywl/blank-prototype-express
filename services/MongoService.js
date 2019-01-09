@@ -165,14 +165,14 @@ MongoService.prototype.createUser = function(credentials) {
     });
 }
 
-MongoService.prototype.getUser = function(username) {
+MongoService.prototype.getUser = function(username, filter) {
     username = username.toLowerCase().trim();
     let now = Date.now();
     return new Promise((resolve, reject) => {
         this.getCollection(this.USER_COLLECTION)
-        .then(users => users.findOne({_id: username})
+        .then(users => users.findOne({...{_id: username}, ...filter})
             .then(user => {
-                if(!user) reject('User doesnt exist');
+                if(!user) resolve();
                 else {
                     users.updateOne({_id: username}, {$set: {last: now}})
                     .then(() => resolve(user))

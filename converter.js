@@ -27,9 +27,7 @@ graph.edges.forEach(edge => {
         query: edge.attributes.Query
     };
     _.forIn(edge.attributes, (value, key) => {
-        if(key.startsWith('queries')) {
-            value = JSON.parse(value);
-        }
+        if(key.startsWith('queries')) value = JSON.parse(value);
         _.set(a, key, value);
     });
     from.answers.push(a);
