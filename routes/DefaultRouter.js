@@ -27,29 +27,6 @@ DefaultRouter.get('/user-exists', (req, res) => {
     .catch(err => res.send(err));
 });
 
-// function promiseSerial(funcs) {
-//   return funcs.reduce((promise, func) =>
-//     promise.then(result =>
-//       func().then(Array.prototype.concat.bind(result))).catch(console.error),
-//       Promise.resolve([]));
-// }
-
-function promiseSerial(funcs, breakFn = Boolean) {
-    let searching = true;
-    return funcs.reduce((promise, func) => {
-        return promise.then(result => {
-            if(!searching) return result;
-            else return func()
-            .then(r => {
-                if(breakFn(r)) {
-                    searching = false;
-                    return r;
-                } else return;
-            }).catch(console.error);
-        }).catch(console.error);
-    }, Promise.resolve());
-}
-
 DefaultRouter.get('/get-route', (req, res) => {
 
     const sendLevel = level => {
@@ -100,32 +77,38 @@ DefaultRouter.get('/get-route', (req, res) => {
             });
     
             let ordered = _.orderBy(matchingAnswers, 'index');
-    
-            let promiseFactories = ordered.map(path => {
-                return () => {
-                    return new Promise((resolve, reject) => {
-                        const resolveAnswer = passed => resolve({...{path}, ...{passed}});
-                        if(!path.queries || !path.queries.find) resolveAnswer(true);
-                        mongoService.getUser(username, path.queries.find)
-                        .then(user => resolveAnswer(Boolean(user)))
-                        .catch(reject);
-                    });
-                }
-            });
 
-            promiseSerial(promiseFactories, r => r && r.passed)
-            .then(result => {
-                if(result && result.passed) {
-                    let path = result.path;
-                    let level = settingService.getConfig().levels[path.target];
-                    if(path.queries && path.queries.update) {
-                        mongoService.updateUser(username, path.queries.update)
-                        .then(() => sendLevel(level))
-                        .catch(err => res.status(500).send(err));
-                    } else sendLevel(level);
-                } else res.send({success: false});
+            const testQueriesOnUser = (user, queries) => {
+                let passed = true; 
+                _.forIn(queries, (value, key) => {
+                    let eq = _.get(user, key) == value; 
+                    if(!eq) passed = false; 
+                    return eq;
+                }); 
+                return passed;
+            }
+
+            mongoService.getUser(username)
+            .then(user => {
+                if(!user) res.status(404).send({err: `No user ${username} found`});
+                else {
+                    let path;
+                    _.forEach(ordered, p => {
+                        let passed = p.queries ? testQueriesOnUser(user, p.queries.find) : true;
+                        if(passed) path = p;
+                        return !passed;
+                    });
+                    if(path) {
+                        let level = settingService.getConfig().levels[path.target];
+                        if(path.queries && path.queries.update) {
+                            mongoService.updateUser(username, path.queries.update)
+                            .then(() => sendLevel(level))
+                            .catch(err => res.status(500).send(err));
+                        } else sendLevel(level);
+                    } else res.send({success: false});
+                }
             })
-            .catch(err => res.status(400).send(err));
+            .catch(err => res.status(404).send(err));
     
         }
     })
