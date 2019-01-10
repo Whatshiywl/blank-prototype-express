@@ -101,22 +101,28 @@ DefaultRouter.get('/get-route', (req, res) => {
     
             let ordered = _.orderBy(matchingAnswers, 'index');
     
-            let promiseFactories = ordered.map(a => {
+            let promiseFactories = ordered.map(path => {
                 return () => {
                     return new Promise((resolve, reject) => {
-                        if(!a.queries || !a.queries.find) resolve({target: a.target, passed: true});
-                        mongoService.getUser(username, a.queries.find)
-                        .then(user => resolve({target: a.target, passed: Boolean(user)}))
+                        const resolveAnswer = passed => resolve({...{path}, ...{passed}});
+                        if(!path.queries || !path.queries.find) resolveAnswer(true);
+                        mongoService.getUser(username, path.queries.find)
+                        .then(user => resolveAnswer(Boolean(user)))
                         .catch(reject);
                     });
                 }
             });
 
             promiseSerial(promiseFactories, r => r && r.passed)
-            .then(results => {
-                if(results && results.passed) {
-                    let level = settingService.getConfig().levels[results.target];
-                    sendLevel(level);
+            .then(result => {
+                if(result && result.passed) {
+                    let path = result.path;
+                    let level = settingService.getConfig().levels[path.target];
+                    if(path.queries && path.queries.update) {
+                        mongoService.updateUser(username, path.queries.update)
+                        .then(() => sendLevel(level))
+                        .catch(err => res.status(500).send(err));
+                    } else sendLevel(level);
                 } else res.send({success: false});
             })
             .catch(err => res.status(400).send(err));
