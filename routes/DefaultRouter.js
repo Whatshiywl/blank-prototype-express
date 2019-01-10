@@ -53,15 +53,37 @@ DefaultRouter.get('/get-route', (req, res) => {
     .then(payload => {
         let username = payload.user.username;
 
-        let level;
-        if(from == 'login') {
-            level = settingService.getConfig().levels[0];
-            sendLevel(level);
-        } else {
+        mongoService.getUser(username)
+        .then(user => {
+            if(!user) {
+                res.status(404).send({err: `No user ${username} found`});
+                return;
+            }
+
+            let level;
+            if(from == 'login') {
+                let visited = (user.visited || []);
+                if(visited.indexOf('0') == -1) visited.push('0');
+                mongoService.updateUser(username, { $set: { visited } })
+                .then(() => {
+                    level = settingService.getConfig().levels['0'];
+                    sendLevel(level);
+                })
+                .catch(err => res.status(500).send(err));
+                return;
+            }
+
             let plainUrl = from;
             if(from != 'login') from = Buffer.from(from, 'base64').toString();
+
+            //TODO: still passing first loop
+            let id = settingService.getRouteIDByURL(from);
+            if(!user.visited || !user.visited.indexOf(id) == -1) {
+                res.send({success: false});
+                return;
+            }
         
-            level = _.find(settingService.getConfig().levels, { url: from });
+            level = settingService.getRouteByURL(from);
         
             if(!level) {
                 res.status(404).send({err: `Level with url ${plainUrl} not found`});
@@ -88,29 +110,23 @@ DefaultRouter.get('/get-route', (req, res) => {
                 return passed;
             }
 
-            mongoService.getUser(username)
-            .then(user => {
-                if(!user) res.status(404).send({err: `No user ${username} found`});
-                else {
-                    let path;
-                    _.forEach(ordered, p => {
-                        let passed = p.queries ? testQueriesOnUser(user, p.queries.find) : true;
-                        if(passed) path = p;
-                        return !passed;
-                    });
-                    if(path) {
-                        let level = settingService.getConfig().levels[path.target];
-                        if(path.queries && path.queries.update) {
-                            mongoService.updateUser(username, path.queries.update)
-                            .then(() => sendLevel(level))
-                            .catch(err => res.status(500).send(err));
-                        } else sendLevel(level);
-                    } else res.send({success: false});
-                }
-            })
-            .catch(err => res.status(404).send(err));
+            let path;
+            _.forEach(ordered, p => {
+                let passed = p.queries ? testQueriesOnUser(user, p.queries.find) : true;
+                if(passed) path = p;
+                return !passed;
+            });
+            if(path) {
+                let visited = (user.visited || []);
+                if(visited.indexOf(path.target) == -1) visited.push(path.target);
+                let query = _.defaultsDeep({ $set: { visited } }, (path.queries || {}).update);
+                let level = settingService.getConfig().levels[path.target];
+                mongoService.updateUser(username, query)
+                .then(() => sendLevel(level))
+                .catch(err => res.status(500).send(err));
+            } else res.send({success: false});
     
-        }
+        }).catch(err => res.status(404).send(err));
     })
     .catch(err => res.status(400).send(err));
 
