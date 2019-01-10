@@ -27,11 +27,27 @@ DefaultRouter.get('/user-exists', (req, res) => {
     .catch(err => res.send(err));
 });
 
-function promiseSerial(funcs) {
-  return funcs.reduce((promise, func) =>
-    promise.then(result =>
-      func().then(Array.prototype.concat.bind(result))).catch(console.error),
-      Promise.resolve([]));
+// function promiseSerial(funcs) {
+//   return funcs.reduce((promise, func) =>
+//     promise.then(result =>
+//       func().then(Array.prototype.concat.bind(result))).catch(console.error),
+//       Promise.resolve([]));
+// }
+
+function promiseSerial(funcs, breakFn = Boolean) {
+    let searching = true;
+    return funcs.reduce((promise, func) => {
+        return promise.then(result => {
+            if(!searching) return result;
+            else return func()
+            .then(r => {
+                if(breakFn(r)) {
+                    searching = false;
+                    return r;
+                } else return;
+            }).catch(console.error);
+        }).catch(console.error);
+    }, Promise.resolve());
 }
 
 DefaultRouter.get('/get-route', (req, res) => {
@@ -39,7 +55,7 @@ DefaultRouter.get('/get-route', (req, res) => {
     const sendLevel = level => {
         let picked = _.pick(level, ['question', 'url']);
         picked.url = Buffer.from(picked.url).toString('base64');
-        res.send(picked);
+        res.send({...{success: true}, ...picked});
     }
 
     let from = req.query.from;
@@ -96,13 +112,14 @@ DefaultRouter.get('/get-route', (req, res) => {
                 }
             });
 
-            promiseSerial(promiseFactories)
+            promiseSerial(promiseFactories, r => r && r.passed)
             .then(results => {
-                res.send(results);
+                if(results && results.passed) {
+                    let level = settingService.getConfig().levels[results.target];
+                    sendLevel(level);
+                } else res.send({success: false});
             })
-            .catch(err => {
-                res.status(400).send(err);
-            });
+            .catch(err => res.status(400).send(err));
     
         }
     })
