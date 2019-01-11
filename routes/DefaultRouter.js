@@ -44,12 +44,12 @@ DefaultRouter.post('/post-answer', (req, res) => {
     let token = req.body.token;
 
     if(!from) {
-        res.status(400).send({err: "No from field on query"});
+        res.status(400).send({err: "No from field on body"});
         return;
     }
 
     if(!token) {
-        res.status(400).send({err: "No token field on query"});
+        res.status(400).send({err: "No token field on body"});
         return;
     }
 
@@ -131,7 +131,7 @@ DefaultRouter.post('/post-answer', (req, res) => {
 
 });
 
-DefaultRouter.get('/validade-route', (req, res) => {
+DefaultRouter.get('/validate-route', (req, res) => {
     let from = req.query.from;
     let token = req.query.token;
 
@@ -147,7 +147,7 @@ DefaultRouter.get('/validade-route', (req, res) => {
 
     jwtService.decrypt(token)
     .then(payload => {
-        if(!payload.success || !payload.question || !payload.url) res.status(403).send({err: 'Invalid token'})
+        if(!payload.success || !payload.url) res.status(403).send({err: 'Invalid token'})
         else res.send({success: payload.url == from});
     })
     .catch(err => res.status(401).send(err));
