@@ -27,17 +27,21 @@ DefaultRouter.get('/user-exists', (req, res) => {
     .catch(err => res.send(err));
 });
 
-DefaultRouter.get('/get-route', (req, res) => {
+DefaultRouter.post('/post-answer', (req, res) => {
 
     const sendLevel = level => {
         let picked = _.pick(level, ['question', 'url']);
         picked.url = Buffer.from(picked.url).toString('base64');
-        res.send({...{success: true}, ...picked});
+        picked.success = true;
+        jwtService.encrypt(picked, {
+            expiresIn: '30s'
+        }).then(token => res.send({...{token}, ...picked}))
+        .catch(err => res.status(500).send(err));
     }
 
-    let from = req.query.from;
-    let answer = req.query.answer || '';
-    let token = req.query.token || '';
+    let from = req.body.from;
+    let answer = req.body.answer || '';
+    let token = req.body.token;
 
     if(!from) {
         res.status(400).send({err: "No from field on query"});
@@ -76,9 +80,8 @@ DefaultRouter.get('/get-route', (req, res) => {
             let plainUrl = from;
             if(from != 'login') from = Buffer.from(from, 'base64').toString();
 
-            //TODO: still passing first loop
             let id = settingService.getRouteIDByURL(from);
-            if(!user.visited || !user.visited.indexOf(id) == -1) {
+            if(!user.visited || user.visited.indexOf(id) == -1) {
                 res.send({success: false});
                 return;
             }
@@ -110,12 +113,8 @@ DefaultRouter.get('/get-route', (req, res) => {
                 return passed;
             }
 
-            let path;
-            _.forEach(ordered, p => {
-                let passed = p.queries ? testQueriesOnUser(user, p.queries.find) : true;
-                if(passed) path = p;
-                return !passed;
-            });
+            let path = _.find(ordered, p => !p.queries || testQueriesOnUser(user, p.queries.find));
+
             if(path) {
                 let visited = (user.visited || []);
                 if(visited.indexOf(path.target) == -1) visited.push(path.target);
@@ -129,6 +128,29 @@ DefaultRouter.get('/get-route', (req, res) => {
         }).catch(err => res.status(404).send(err));
     })
     .catch(err => res.status(400).send(err));
+
+});
+
+DefaultRouter.get('/validade-route', (req, res) => {
+    let from = req.query.from;
+    let token = req.query.token;
+
+    if(!from) {
+        res.status(401).send({err: 'No route provided'});
+        return;
+    }
+
+    if(!token) {
+        res.status(401).send({err: 'No token provided'});
+        return;
+    }
+
+    jwtService.decrypt(token)
+    .then(payload => {
+        if(!payload.success || !payload.question || !payload.url) res.status(403).send({err: 'Invalid token'})
+        else res.send({success: payload.url == from});
+    })
+    .catch(err => res.status(401).send(err));
 
 });
 
