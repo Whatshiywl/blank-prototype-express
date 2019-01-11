@@ -5,13 +5,18 @@ let AES = CryptoJS.AES;
 let encoding = CryptoJS.enc.Utf8;
 
 var config;
+var pathKeyMap = {};
 var KEY;
 
 function SettingService() {
     getAESKey();
     loadConfig();
     if(!config) loadCrypted();
-    if(!config) console.error('ERROR! NO CONFIG FOUND!');
+    if(!config) {
+        console.error('ERROR! NO CONFIG FOUND!');
+        process.exit(7);
+    }
+    _.forIn(this.getConfig().levels, (value, key) => value.url ? pathKeyMap[value.url] = key : true);    
 }
 
 SettingService.prototype.getConfig = function() {
@@ -20,6 +25,19 @@ SettingService.prototype.getConfig = function() {
 
 SettingService.prototype.getIgnoredNames = function() {
     return _.cloneDeep(config.ignoreUserNames || []);
+}
+
+SettingService.prototype.getRouteByID = function(id) {
+    return this.getConfig().levels[id];
+}
+
+SettingService.prototype.getRouteIDByURL = function(url) {
+    return pathKeyMap[url] || pathKeyMap[Buffer.from(url, 'base64').toString()];
+}
+
+SettingService.prototype.getRouteByURL = function(url) {
+    let id = this.getRouteIDByURL(url);
+    return this.getRouteByID(id);
 }
 
 SettingService.prototype.isIgnoredName = function(name) {
@@ -34,7 +52,12 @@ SettingService.prototype.isIgnoredName = function(name) {
 
 SettingService.prototype.getForbiddenNames = function() {
     let forbidden = _.cloneDeep(config.forbiddenUserNames || []);
-    _.forEach(config.levels, level => forbidden.push(level.answer));
+    _.forIn(config.levels, level => {
+        _.forEach(level.answers, answer => {
+            if(answer.answer)
+                forbidden.push(answer.answer);
+        });
+    });
     forbidden.pop();
     return forbidden;
 }

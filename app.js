@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var handlebars = require('express-handlebars');
 var cors = require('cors');
 
-var DirectRouter = require('./routes/DirectRouter');
+// var DirectRouter = require('./routes/DirectRouter');
 var DefaultRouter = require('./routes/DefaultRouter');
 var SecureRouter = require('./routes/SecureRouter');
 
@@ -30,7 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1', DefaultRouter);
 app.use('/secure', SecureRouter);
-app.use('/', DirectRouter);
+// app.use('/', DirectRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
