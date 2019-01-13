@@ -162,7 +162,6 @@ DefaultRouter.get('/validate-route', (req, res) => {
             }
             mongoService.getUser(username)
             .then(user => {
-                console.log(user.visited, fromId, from);
                 res.send({success: user.visited && user.visited.indexOf(fromId) != -1});
             })
             .catch(err => res.status(401).send(err));
