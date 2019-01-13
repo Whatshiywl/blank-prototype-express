@@ -133,6 +133,7 @@ DefaultRouter.post('/post-answer', (req, res) => {
 
 DefaultRouter.get('/validate-route', (req, res) => {
     let from = req.query.from;
+    let routeToken = req.query['route-token'];
     let token = req.query.token;
 
     if(!from) {
@@ -140,17 +141,40 @@ DefaultRouter.get('/validate-route', (req, res) => {
         return;
     }
 
-    if(!token) {
+    if(!routeToken && !token) {
         res.status(401).send({err: 'No token provided'});
         return;
     }
 
-    jwtService.decrypt(token)
+    const tryFromToken = (err) => {
+        if(!token) {
+            res.status(403).send({err: err || 'Invalid route token'});
+            return;
+        }
+
+        let fromId = settingService.getRouteIDByURL(from);
+        jwtService.decrypt(token)
+        .then(payload => {
+            let username = (payload.user || {}).username;
+            if(!username) {
+                res.status(401).send({err: 'Invalid login token'});
+                return;
+            }
+            mongoService.getUser(username)
+            .then(user => {
+                res.send({success: user.visited && user.visited.indexOf(fromId) != -1});
+            })
+            .catch(err => res.status(401).send(err));
+        })
+        .catch(err => res.status(401).send(err))
+    }
+
+    jwtService.decrypt(routeToken)
     .then(payload => {
-        if(!payload.success || !payload.url) res.status(403).send({err: 'Invalid token'})
+        if(!payload.success || !payload.url) tryFromToken();
         else res.send({success: payload.url == from});
     })
-    .catch(err => res.status(401).send(err));
+    .catch(err => tryFromToken(err));
 
 });
 

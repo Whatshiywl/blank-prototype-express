@@ -13,8 +13,8 @@ function SettingService() {
     loadConfig();
     if(!config) loadCrypted();
     if(!config) {
-        console.error('ERROR! NO CONFIG FOUND!');
-        process.exit(7);
+        console.error('ERROR! NO CONFIG FOUND! EXING PROCESS...');
+        process.exit(9);
     }
     _.forIn(this.getConfig().levels, (value, key) => value.url ? pathKeyMap[value.url] = key : true);    
 }
@@ -79,7 +79,9 @@ function getAESKey() {
     try {
         KEY = fs.readFileSync('./private-keys/aes.key').toString();
     } catch(err) {
-        console.warn(err);
+        console.error('Error loading aes.key:', err.name, err.message);
+        console.error('Exiting process...');
+        process.exit(9);
     }
 }
 
