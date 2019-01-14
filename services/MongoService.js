@@ -3,6 +3,7 @@ var _ = require('lodash');
 
 var settingService = require('./SettingService');
 var mongoSettings = settingService.getConfig().mongoSettings;
+var User = require('../models/User');
 
 // Create seed data
 
@@ -172,10 +173,10 @@ MongoService.prototype.getUser = function(username, filter) {
         this.getCollection(this.USER_COLLECTION)
         .then(users => users.findOne({...{_id: username}, ...filter})
             .then(user => {
-                if(!user) resolve();
+                if(!user) reject({err: `No user with name ${username}`});
                 else {
                     users.updateOne({_id: username}, {$set: {last: now}})
-                    .then(() => resolve(user))
+                    .then(() => resolve(User.from(user)))
                     .catch(reject);
                 }
             })

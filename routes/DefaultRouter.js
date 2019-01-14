@@ -4,6 +4,7 @@ var mongoService = require('../services/MongoService');
 var settingService = require('../services/SettingService');
 var authService = require('../services/AuthService');
 var jwtService = require('../services/JWTService');
+var User = require('../models/User');
 var _ = require('lodash');
 
 DefaultRouter.get('/hello', (req, res) => {
@@ -39,11 +40,11 @@ DefaultRouter.post('/post-answer', (req, res) => {
         .catch(err => res.status(500).send(err));
     }
 
-    let from = req.body.from;
+    let base64Url = req.body.from;
     let answer = req.body.answer || '';
     let token = req.body.token;
 
-    if(!from) {
+    if(!base64Url) {
         res.status(400).send({err: "No from field on body"});
         return;
     }
@@ -64,36 +65,35 @@ DefaultRouter.post('/post-answer', (req, res) => {
                 return;
             }
 
-            let level;
-            if(from == 'login') {
+            let route;
+            if(base64Url == 'login') {
                 let visited = (user.visited || []);
                 if(visited.indexOf('0') == -1) visited.push('0');
                 mongoService.updateUser(username, { $set: { visited } })
                 .then(() => {
-                    level = settingService.getConfig().levels['0'];
-                    sendLevel(level);
+                    route = settingService.getConfig().levels['0'];
+                    sendLevel(route);
                 })
                 .catch(err => res.status(500).send(err));
                 return;
             }
 
-            let plainUrl = from;
-            if(from != 'login') from = Buffer.from(from, 'base64').toString();
+            let plainUrl = Buffer.from(base64Url, 'base64').toString();
 
-            let id = settingService.getRouteIDByURL(from);
+            let id = settingService.getRouteIDByURL(plainUrl);
             if(!user.visited || user.visited.indexOf(id) == -1) {
                 res.send({success: false});
                 return;
             }
         
-            level = settingService.getRouteByURL(from);
+            route = settingService.getRouteByURL(plainUrl);
         
-            if(!level) {
-                res.status(404).send({err: `Level with url ${plainUrl} not found`});
+            if(!route) {
+                res.status(404).send({err: `Route with url ${base64Url} not found`});
                 return;
             }
         
-            let matchingAnswers = _.filter(level.answers, a => {
+            let matchingAnswers = _.filter(route.answers, a => {
                 let regex = new RegExp(a.answer);
                 let matches = answer.match(regex);
                 if(!matches) return false;
@@ -185,7 +185,10 @@ DefaultRouter.post('/login', (req, res) => {
     else {
         authService.login(credentials)
         .then(token => res.send({token}))
-        .catch(err => res.send(err));
+        .catch(err => {
+            console.log(err);
+            res.send(err)
+        });
     }
 });
 
