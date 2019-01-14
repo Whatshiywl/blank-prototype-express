@@ -7,7 +7,7 @@
     "npm": "6.2.0"
   },
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "node ./dist/bin/www",
     "dev": "NODE_ENV=dev node ./bin/www",
     "update": "git pull origin dev && rm Config.json"
   },
@@ -27,6 +27,14 @@
     "serve-favicon": "~2.4.5"
   },
   "devDependencies": {
-    "nodemon": "^1.18.5"
+    "@types/node": "^10.12.18",
+    "gulp": "^4.0.0",
+    "gulp-nodemon": "^2.4.2",
+    "gulp-plumber": "^1.2.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^5.0.0",
+    "merge2": "^1.2.3",
+    "nodemon": "^1.18.5",
+    "typescript": "^3.2.2"
   }
 }

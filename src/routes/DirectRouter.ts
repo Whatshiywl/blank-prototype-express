@@ -1,15 +1,15 @@
 var DirectRouter = require('express').Router();
-var moment = require('moment');
-var _ = require('lodash');
+import * as moment from 'moment';
+import * as _ from 'lodash';
 
 var config = require('../services/SettingService').getConfig();
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 
-var settingService = require('../services/SettingService');
-var leaderboard = require('../services/LeaderboardService');
-var jwtService = require('../services/JWTService');
-var authService = require('../services/AuthService');
+import settingService from '../services/SettingService';
+import leaderboard from '../services/LeaderboardService';
+import jwtService from '../services/JWTService';
+import authService from '../services/AuthService';
 
 function toRoute(url) {
     return '/' + Buffer.from(url).toString('base64');
@@ -73,8 +73,8 @@ function postHandler(answer, from, success, error) {
                     else res.redirect(`${error}?token=${newToken}`);
                 })
                 .catch(error => {
-                    console.error(`POST TOKEN Error:`, err.message);
-                    res.redirect(`${error}?token=${newToken}`);
+                    console.error(`POST TOKEN Error:`, error.message);
+                    res.redirect(`${error}?token=${token}`);
                 });
             })
             .catch(error => {
@@ -130,4 +130,4 @@ DirectRouter.post('/login', (req, res) => {
     }
 });
 
-module.exports = DirectRouter;
+export default DirectRouter;

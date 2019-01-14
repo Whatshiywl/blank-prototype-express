@@ -8,8 +8,10 @@ var handlebars = require('express-handlebars');
 var cors = require('cors');
 
 // var DirectRouter = require('./routes/DirectRouter');
-var DefaultRouter = require('./routes/DefaultRouter');
-var SecureRouter = require('./routes/SecureRouter');
+// var DefaultRouter = require('./routes/DefaultRouter');
+import DefaultRouter from './routes/DefaultRouter';
+// var SecureRouter = require('./routes/SecureRouter');
+// import SecureRouter from './routes/SecureRouter';
 
 var app = express();
 
@@ -29,13 +31,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1', DefaultRouter);
-app.use('/secure', SecureRouter);
+// app.use('/secure', SecureRouter);
 // app.use('/', DirectRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
-  err.status = 404;
+  err['status'] = 404;
   next(err);
 });
 
@@ -50,4 +52,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+export default app;

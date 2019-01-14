@@ -1,5 +1,5 @@
-var fs = require('fs');
-var JWT = require('jsonwebtoken');
+import * as fs from 'fs';
+import * as JWT from 'jsonwebtoken';
 
 function JWTService() {
     this.loadKey();
@@ -36,4 +36,4 @@ JWTService.prototype.decrypt = function(token) {
 }
 
 var jwtService = new JWTService();
-module.exports = jwtService;
+export default jwtService;

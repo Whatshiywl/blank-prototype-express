@@ -1,8 +1,8 @@
-var mongoService = require('./MongoService');
-var jwtService = require('./JWTService');
-var settingService = require('./SettingService');
-let CryptoJS = require('crypto-js');
-let _ = require('lodash');
+import mongoService from './MongoService';
+import jwtService from './JWTService';
+import settingService from './SettingService';
+import * as CryptoJS from 'crypto-js';
+import * as _ from 'lodash';
 
 function AuthService() {}
 
@@ -77,4 +77,4 @@ function addSalt(password) {
 }
 
 const authService = new AuthService();
-module.exports = authService;
+export default authService;

@@ -1,8 +1,8 @@
 var SecureRouter = require('express').Router();
-var fs = require('fs');
+import * as fs from 'fs';
 
-var leaderboardService = require('../services/LeaderboardService');
-var mongoService = require('../services/MongoService');
+import leaderboardService from '../services/LeaderboardService';
+import mongoService from '../services/MongoService';
 
 var KEY = process.env.ACCESS_KEY;
 if(!KEY) {
@@ -42,4 +42,4 @@ SecureRouter.get('/users', (req, res) => {
     .catch(error => res.render('error', {error}));
 });
 
-module.exports = SecureRouter;
+export default SecureRouter;

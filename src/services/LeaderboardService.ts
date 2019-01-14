@@ -1,8 +1,8 @@
-var _ = require('lodash');
-var moment = require('moment');
-var jwtService = require('./JWTService');
-var settingService = require('./SettingService');
-var mongoService = require('./MongoService');
+import * as _ from 'lodash';
+import * as moment from 'moment';
+import jwtService from './JWTService';
+import settingService from './SettingService';
+import mongoService from './MongoService';
 
 function LeaderboardService() {}
 
@@ -53,4 +53,4 @@ LeaderboardService.prototype.getLeaderboard = function() {
 }
 
 const leaderboardService = new LeaderboardService();
-module.exports = leaderboardService;
+export default leaderboardService;

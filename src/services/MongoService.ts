@@ -1,9 +1,9 @@
-var mongodb = require('mongodb');
-var _ = require('lodash');
+import * as mongodb from 'mongodb';
+import * as _ from 'lodash';
 
-var settingService = require('./SettingService');
+import settingService from './SettingService';
 var mongoSettings = settingService.getConfig().mongoSettings;
-var User = require('../models/User');
+import User from '../models/User';
 
 // Create seed data
 
@@ -246,4 +246,4 @@ MongoService.prototype.disconnect = function() {
 }
 
 const mongoService = new MongoService();
-module.exports = mongoService;
+export default mongoService;

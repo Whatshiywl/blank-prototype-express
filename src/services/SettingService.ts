@@ -1,6 +1,6 @@
-let fs = require('fs');
-let CryptoJS = require('crypto-js');
-let _ = require('lodash');
+import * as fs from 'fs';
+import * as CryptoJS from 'crypto-js';
+import * as _ from 'lodash';
 let AES = CryptoJS.AES;
 let encoding = CryptoJS.enc.Utf8;
 
@@ -119,4 +119,4 @@ function loadCrypted() {
 }
 
 const settingService = new SettingService();
-module.exports = settingService;
+export default settingService;
