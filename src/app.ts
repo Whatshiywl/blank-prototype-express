@@ -1,55 +1,75 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var handlebars = require('express-handlebars');
-var cors = require('cors');
+import * as express from 'express'
+import * as path from 'path'
+import * as favicon from 'serve-favicon'
+import * as logger from 'morgan'
+import * as cookieParser from 'cookie-parser'
+import * as bodyParser from 'body-parser'
+import * as handlebars from 'express-handlebars'
+import * as cors from 'cors';
 
 // var DirectRouter = require('./routes/DirectRouter');
 // var DefaultRouter = require('./routes/DefaultRouter');
 import DefaultRouter from './routes/DefaultRouter';
+import { ExecFileOptions } from 'child_process';
 // var SecureRouter = require('./routes/SecureRouter');
 // import SecureRouter from './routes/SecureRouter';
 
-var app = express();
+class App {
 
-app.use(cors());
+  readonly express: express.Application;
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.engine('handlebars', handlebars({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
+  constructor() {
+    this.express = express();
+    this.middleware();
+    this.routes();
+    this.error();
+  }
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-if(process.env.NODE_ENV == 'dev') app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+  private middleware() {
 
-app.use('/api/v1', DefaultRouter);
-// app.use('/secure', SecureRouter);
-// app.use('/', DirectRouter);
+    this.express.use(cors());
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err['status'] = 404;
-  next(err);
-});
+    // view engine setup
+    this.express.set('views', path.join(__dirname, 'views'));
+    this.express.engine('handlebars', handlebars({defaultLayout: 'main'}));
+    this.express.set('view engine', 'handlebars');
+    
+    // uncomment after placing your favicon in /public
+    //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+    if(process.env.NODE_ENV == 'dev') this.express.use(logger('dev'));
+    this.express.use(bodyParser.json());
+    this.express.use(bodyParser.urlencoded({ extended: false }));
+    this.express.use(cookieParser());
+    this.express.use(express.static(path.join(__dirname, 'public')));
+  }
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = err || {};
+  private routes() {
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+    this.express.use('/api/v1', DefaultRouter);
+    // this.express.use('/secure', SecureRouter);
+    // this.express.use('/', DirectRouter);
+  }
 
-export default app;
+  private error() {
+    // catch 404 and forward to error handler
+    this.express.use(function(req, res, next) {
+      var err = new Error('Not Found');
+      err['status'] = 404;
+      next(err);
+    });
+    
+    // error handler
+    this.express.use(function(err, req, res, next) {
+      // set locals, only providing error in development
+      res.locals.message = err.message;
+      res.locals.error = err || {};
+    
+      // render the error page
+      res.status(err.status || 500);
+      res.render('error');
+    });
+  }
+
+}
+
+export default new App().express;

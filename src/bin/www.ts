@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-import app from '../app';
+import App from '../app';
 // var debug = require('debug')('blank-prototype:server');
 import * as http from 'http';
 
@@ -13,13 +13,13 @@ import * as http from 'http';
  */
 
 var port = normalizePort(process.env.PORT || '9000');
-app.set('port', port);
+App.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = http.createServer(App);
 
 /**
  * Listen on provided port, on all network interfaces.

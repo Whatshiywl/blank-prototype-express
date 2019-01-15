@@ -1,38 +1,44 @@
 import * as fs from 'fs';
 import * as JWT from 'jsonwebtoken';
 
-function JWTService() {
-    this.loadKey();
-    this.KEY = Buffer.from(this.KEY).toString('base64');
-}
+class JWTService {
 
-JWTService.prototype.loadKey = function() {
-    this.KEY = process.env.JWT_KEY;
-    if(this.KEY) return;
-    console.log('Loading jwt.key');
-    try {
-        this.KEY = fs.readFileSync('./private-keys/jwt.key').toString();
-    } catch(err) {
-        console.warn(err);
+    private readonly KEY: string;
+
+    constructor() {
+        this.KEY = this.loadKey();
     }
-}
-
-JWTService.prototype.encrypt = function(obj, options) {
-    return new Promise((resolve, reject) => {
-        JWT.sign(obj, this.KEY, options, (err, token) => {
-            if(err) reject(err);
-            else resolve(token);
+    
+    encrypt(obj, options) {
+        return new Promise((resolve, reject) => {
+            JWT.sign(obj, this.KEY, options, (err, token) => {
+                if(err) reject(err);
+                else resolve(token);
+            });
         });
-    });
-}
-
-JWTService.prototype.decrypt = function(token) {
-    return new Promise((resolve, reject) => {
-        JWT.verify(token, this.KEY, (err, decoded) => {
-            if(err) reject(err);
-            else resolve(decoded);
+    }
+    
+    decrypt(token) {
+        return new Promise((resolve, reject) => {
+            JWT.verify(token, this.KEY, (err, decoded) => {
+                if(err) reject(err);
+                else resolve(decoded);
+            });
         });
-    });
+    }
+
+    private loadKey() {
+        let key = process.env.JWT_KEY;
+        if(!key) {
+            console.log('Loading jwt.key');
+            try {
+                key = fs.readFileSync('./private-keys/jwt.key').toString();
+            } catch(err) {
+                console.warn(err);
+            }
+        }
+        return Buffer.from(key).toString('base64');
+    }
 }
 
 var jwtService = new JWTService();
