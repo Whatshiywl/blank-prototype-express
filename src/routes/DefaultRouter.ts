@@ -61,7 +61,7 @@ class DefaultRouter {
                 return;
             }
         
-            jwtService.decrypt(token)
+            jwtService.decryptLoginToken(token)
             .then(payload => {
                 let username = payload.user.username;
         
@@ -160,9 +160,9 @@ class DefaultRouter {
                 }
         
                 let fromId = settingService.getRouteIDByURL(from);
-                jwtService.decrypt(token)
+                jwtService.decryptLoginToken(token)
                 .then(payload => {
-                    let username = (payload.user || {}).username;
+                    let username = payload.user.username;
                     if(!username) {
                         res.status(401).send({err: 'Invalid login token'});
                         return;
@@ -176,7 +176,7 @@ class DefaultRouter {
                 .catch(err => res.status(401).send(err))
             }
         
-            jwtService.decrypt(routeToken)
+            jwtService.decryptRouteToken(routeToken)
             .then(payload => {
                 if(!payload.success || !payload.url) tryFromToken();
                 else res.send({success: payload.url == from});

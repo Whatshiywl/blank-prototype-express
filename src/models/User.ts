@@ -6,7 +6,7 @@ export default class User {
     username: string;
     password: string;
     score: number;
-    visited: [];
+    visited: string[];
     current: string;
     at: number;
     last: number;
