@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/express": "^4.16.0",
     "@types/jsonwebtoken": "^8.3.0",
+    "@types/lodash": "^4.14.119",
     "@types/mongodb": "^3.1.18",
     "@types/node": "^10.12.18",
     "gulp": "^4.0.0",

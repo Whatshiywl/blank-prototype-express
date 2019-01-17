@@ -8,7 +8,7 @@ export default class User {
     score: number;
     visited: string[];
     current: string;
-    at: number;
+    at: number | string;
     last: number;
 
     constructor(credentials?: {username: string, password: string}) {

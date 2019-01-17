@@ -16,7 +16,7 @@ class LeaderboardService {
     }
 
     setScore(userObj: User | string, score: number) {
-        if(settingService.isIgnoredName(userObj)) score = -1;
+        // if(settingService.isIgnoredName(userObj)) score = -1;
         let at = Date.now();
         return new Promise<void>((resolve, reject) => {
             mongoService.updateUser(userObj, {$set: {score: score, at}})

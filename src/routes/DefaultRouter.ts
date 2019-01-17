@@ -40,10 +40,8 @@ class DefaultRouter {
             const sendLevel = level => {
                 let picked = _.pick(level, ['question', 'url']);
                 picked.url = Buffer.from(picked.url).toString('base64');
-                picked.success = true;
-                jwtService.encrypt(picked, {
-                    expiresIn: '30s'
-                }).then(token => res.send({...{token}, ...picked}))
+                picked['success'] = true;
+                jwtService.encryptRouteToken(picked).then(token => res.send({...{token}, ...picked}))
                 .catch(err => res.status(500).send(err));
             }
         

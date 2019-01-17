@@ -54,11 +54,9 @@ class AuthService {
         return new Promise((resolve, reject) => {
             mongoService.getUser(name)
             .then(user => {
-                user = _.pick(user, ['username']);
-                let payload = {...{user}, ...data};
-                resolve(jwtService.encrypt(payload, {
-                    expiresIn: '1d'
-                }));
+                let userPayload = _.pick(user, ['username']);
+                let payload = {...{user: userPayload}, ...data};
+                resolve(jwtService.encryptLoginToken(payload));
             })
             .catch(reject);
         });
