@@ -3,22 +3,23 @@ import * as moment from 'moment';
 import jwtService from './JWTService';
 import settingService from './SettingService';
 import mongoService from './MongoService';
+import User from '../models/User';
 
 class LeaderboardService {
 
-    getScore(name) {
-        return new Promise((resolve, reject) => {
-            mongoService.getUser(name)
+    getScore(userObj: User | string) {
+        return new Promise<number>((resolve, reject) => {
+            mongoService.getUser(userObj)
             .then(user => resolve(user.score))
             .catch(reject);
         });
     }
 
-    setScore(name, score) {
-        if(settingService.isIgnoredName(name)) score = -1;
+    setScore(userObj: User | string, score: number) {
+        if(settingService.isIgnoredName(userObj)) score = -1;
         let at = Date.now();
-        return new Promise((resolve, reject) => {
-            mongoService.updateUser(name, {$set: {score, at}})
+        return new Promise<void>((resolve, reject) => {
+            mongoService.updateUser(userObj, {$set: {score: score, at}})
             .then(() => {
                 resolve();
             })
@@ -27,7 +28,7 @@ class LeaderboardService {
     }
 
     getLeaderboard() {
-        return new Promise((resolve, reject) => {
+        return new Promise<{leaders: any, newest: any}>((resolve, reject) => {
             mongoService.getUsers({score: {$gte: 0}})
             .then(users => {
                 let scoredUsers = users.filter(user => user.score > 0);

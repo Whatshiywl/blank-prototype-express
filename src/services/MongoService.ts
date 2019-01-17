@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection, InsertOneWriteOpResult, UpdateWriteOpResult, DeleteWriteOpResultObject } from 'mongodb';
+import { MongoClient, Db, Collection, InsertOneWriteOpResult, UpdateWriteOpResult, DeleteWriteOpResultObject, UpdateQuery, FilterQuery } from 'mongodb';
 import * as _ from 'lodash';
 
 import settingService from './SettingService';
@@ -16,7 +16,7 @@ class MongoService {
         this.URI = `mongodb://${mongoSettings.user}:${mongoSettings.pass}@${mongoSettings.host}:${mongoSettings.port}/${mongoSettings.daba}`;
     }
 
-    connect() {
+    private connect() {
         return new Promise<Db>((resolve, reject) => {
             if(this.client) resolve(this.client.db(mongoSettings.daba));
             else {
@@ -29,7 +29,7 @@ class MongoService {
         });
     }
 
-    getCollection(collection) {
+    private getCollection(collection) {
         return new Promise<Collection<User>>((resolve, reject) => {
             this.connect()
             .then(db => {
@@ -50,7 +50,7 @@ class MongoService {
         });
     }
 
-    createUser(credentials) {
+    createUser(credentials: {username: string, password: string}) {
         return new Promise<InsertOneWriteOpResult>((resolve, reject) => {
             if(!credentials || !credentials.username) reject({err: 'Invalid credentials!'});
             else {
@@ -70,8 +70,8 @@ class MongoService {
         });
     }
 
-    getUser(username, filter?) {
-        username = username.toLowerCase().trim();
+    getUser(userObj: User | string, filter?: FilterQuery<User>) {
+        let username = this.getUsername(userObj);
         let now = Date.now();
         return new Promise<User>((resolve, reject) => {
             this.getCollection(this.USER_COLLECTION)
@@ -79,7 +79,7 @@ class MongoService {
                 .then(user => {
                     if(!user) reject({err: `No user with name ${username}`});
                     else {
-                        users.updateOne({_id: username}, {$set: {last: now}})
+                        users.updateOne({_id: userObj}, {$set: {last: now}})
                         .then(() => resolve(User.from(user)))
                         .catch(reject);
                     }
@@ -89,7 +89,7 @@ class MongoService {
         });
     }
 
-    getUsers(filter) {
+    getUsers(filter?: FilterQuery<User>) {
         return new Promise<User[]>((resolve, reject) => {
             this.getCollection(this.USER_COLLECTION)
             .then(users => {
@@ -101,8 +101,8 @@ class MongoService {
         });
     }
 
-    updateUser(username, query) {
-        username = username.toLowerCase().trim();
+    updateUser(userObj: User | string, query: UpdateQuery<User> | User) {
+        let username = this.getUsername(userObj);
         let now = Date.now();
         return new Promise<UpdateWriteOpResult>((resolve, reject) => {
             this.getCollection(this.USER_COLLECTION)
@@ -114,10 +114,10 @@ class MongoService {
         });
     }
 
-    userExists(name) {
-        name = (name || '').toLowerCase().trim();
+    userExists(userObj: User | string) {
+        let username = this.getUsername(userObj);
         return new Promise<{exists: boolean, password: boolean}>((resolve, reject) => {
-            this.getUser(name)
+            this.getUser(username)
             .then(user => resolve({
                 exists: Boolean(user),
                 password: Boolean(user.password)
@@ -126,12 +126,12 @@ class MongoService {
         });
     }
 
-    deleteUser(name) {
-        name = name.toLowerCase().trim();
+    deleteUser(userObj: User | string) {
+        let username = this.getUsername(userObj);
         return new Promise<DeleteWriteOpResultObject>((resolve, reject) => {
             this.getCollection(this.USER_COLLECTION)
             .then(users => {
-                users.deleteOne({_id: name})
+                users.deleteOne({_id: username})
                 .then(resolve)
                 .catch(reject);
             })
@@ -139,7 +139,11 @@ class MongoService {
         });
     }
 
-    disconnect() {
+    private getUsername(user: User | string) {
+        return (user instanceof User ? user.username : user).trim().toLowerCase();
+    }
+
+    private disconnect() {
         return new Promise<void>((resolve, reject) => {
             if(!this.client) resolve();
             else this.client.close().then(() => {

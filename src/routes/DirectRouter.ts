@@ -31,13 +31,13 @@ function getHandler(file, obj, id) {
             })
             .catch(error => res.render('error', {error}));
         } else {
-            jwtService.decrypt(token)
+            jwtService.decryptLoginToken(token)
             .then(payload => {
-                let name = payload.user.name;
-                leaderboard.getScore(name)
+                let username = payload.user.username;
+                leaderboard.getScore(username)
                 .then(score => {
                     if(id > score && id < 99) {
-                        leaderboard.setScore(name, id)
+                        leaderboard.setScore(username, id)
                         .then(() => respondWith({token}))
                         .catch(error => res.render('error', {error}));
                     } else respondWith({token});
@@ -59,16 +59,16 @@ function postHandler(answer, from, success, error) {
         let token = req.body.t;
         if(!token) res.redirect('/');
         else {
-            jwtService.decrypt(token)
+            jwtService.decryptLoginToken(token)
             .then(payload => {
-                let userName = payload.user.name;
-                authService.getTokenForUser(userName)
+                let username = payload.user.username;
+                authService.getTokenForUser(username)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
                     let right = match && match[0] === r;
                     let timestamp = moment().format("DD/MM/YY HH:mm:ss");
-                    console.log(userName, from, r, (right ? '=' : '!='), answer);
+                    console.log(username, from, r, (right ? '=' : '!='), answer);
                     if(right) res.redirect(`${success}?token=${newToken}`);
                     else res.redirect(`${error}?token=${newToken}`);
                 })
