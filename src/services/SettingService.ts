@@ -90,7 +90,7 @@ class SettingService {
     private loadConfig() {
         console.log('Loading Config.json');
         try {
-            this.config = require('../Config.json');
+            this.config = JSON.parse(fs.readFileSync('./Config.json').toString());
             this.encrypt();
         } catch(err) {
             console.log('No Config.json!');
