@@ -1,12 +1,41 @@
 import * as fs from 'fs';
 import * as CryptoJS from 'crypto-js';
 import * as _ from 'lodash';
+import { FilterQuery, UpdateQuery } from 'mongodb';
+import User from '../models/User';
 const AES = CryptoJS.AES;
 const encoding = CryptoJS.enc.Utf8;
 
 class SettingService {
     
-    config: any;
+    config: {
+        mongoSettings: {
+            host: string,
+            port: number,
+            user: string,
+            pass: string,
+            daba: string
+        },
+        ignoreUserNames: string[],
+        forbiddenUserNames: string[],
+        saltTemplate: string,
+        entryPoint: number,
+        routes: {
+            [key: string]: {
+                question: string,
+                url: string,
+                paths: {
+                    answer: string,
+                    target: string,
+                    queries?: {
+                        find?: FilterQuery<User>,
+                        update?: UpdateQuery<User>
+                    },
+                    index: string
+                }[]
+            }
+        }
+    };
     pathKeyMap: {[key: string]: any} = {};
     KEY: string;
 
@@ -18,7 +47,7 @@ class SettingService {
             console.error('ERROR! NO CONFIG FOUND! EXING PROCESS...');
             process.exit(9);
         }
-        _.forIn(this.getConfig().levels, (value, key) => value.url ? this.pathKeyMap[value.url] = key : true);    
+        _.forIn(this.getConfig().routes, (value, key) => value.url ? this.pathKeyMap[value.url] = key : true);    
     }
 
     getConfig() {
@@ -30,7 +59,7 @@ class SettingService {
     }
 
     getRouteByID(id: string) {
-        return this.getConfig().levels[id];
+        return this.getConfig().routes[id];
     }
 
     getRouteIDByURL(url: string) {
@@ -46,16 +75,16 @@ class SettingService {
         name = name.toLowerCase().trim();
         let isIgnored = false;
         this.getIgnoredNames().forEach(ignored => {
-            if(ignored.startsWith('regex:')) ignored = new RegExp(ignored.substr(6));
-            if(name.match(ignored)) isIgnored = true;
+            let regex = new RegExp(ignored.substr(6), 'gi');
+            if(name.match(regex)) isIgnored = true;
         });
         return isIgnored;
     }
 
     getForbiddenNames() {
         let forbidden = _.cloneDeep(this.config.forbiddenUserNames || []);
-        _.forIn(this.config.levels, level => {
-            _.forEach(level.answers, answer => {
+        _.forIn(this.config.routes, level => {
+            _.forEach(level.paths, answer => {
                 if(answer.answer)
                     forbidden.push(answer.answer);
             });
@@ -68,8 +97,8 @@ class SettingService {
         name = (name || '').toLowerCase().trim();
         let isForbidden = false;
         this.getForbiddenNames().forEach(forbidden => {
-            if(forbidden.startsWith('regex:')) forbidden = new RegExp(forbidden.substr(6), 'gi');
-            if(name.match(forbidden)) isForbidden = true;
+            let regex = new RegExp(forbidden, 'gi');
+            if(name.match(regex)) isForbidden = true;
         });
         return isForbidden;
     }

@@ -76,7 +76,7 @@ class DefaultRouter {
                         if(visited.indexOf('0') == -1) visited.push('0');
                         mongoService.updateUser(username, { $set: { visited } })
                         .then(() => {
-                            route = settingService.getConfig().levels['0'];
+                            route = settingService.getConfig().routes['0'];
                             sendLevel(route);
                         })
                         .catch(err => res.status(500).send(err));
@@ -124,7 +124,7 @@ class DefaultRouter {
                         let visited = (user.visited || []);
                         if(visited.indexOf(path.target) == -1) visited.push(path.target);
                         let query = _.defaultsDeep({ $set: { visited } }, (path.queries || {}).update);
-                        let level = settingService.getConfig().levels[path.target];
+                        let level = settingService.getConfig().routes[path.target];
                         mongoService.updateUser(username, query)
                         .then(() => sendLevel(level))
                         .catch(err => res.status(500).send(err));
