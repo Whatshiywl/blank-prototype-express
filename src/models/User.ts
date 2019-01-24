@@ -1,6 +1,9 @@
 import * as _ from 'lodash';
+import { GridFSBucketWriteStream } from 'mongodb';
 
 export default class User {
+
+    static readonly GuestUser = new User();
 
     _id: string;
     username: string;
@@ -12,8 +15,8 @@ export default class User {
     last: number;
 
     constructor(credentials?: {username: string, password: string}) {
-        this._id = credentials ? credentials.username : '';
-        this.username = credentials ? credentials.username : '';
+        this._id = credentials ? credentials.username : 'guest';
+        this.username = credentials ? credentials.username : 'guest';
         this.password = credentials ? credentials.password : '';
         this.score = 0;
         this.visited = [];
@@ -29,6 +32,10 @@ export default class User {
 
     public hasVisitedRoute(route) {
         return true;
+    }
+
+    public isGuest() {
+        return this.username == 'guest';
     }
 
 }

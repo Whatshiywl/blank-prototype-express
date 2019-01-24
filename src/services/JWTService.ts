@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as JWT from 'jsonwebtoken';
 import * as _ from 'lodash';
 import User from '../models/User';
+import mongoService from './MongoService';
+import BlankRoute from '../models/BlankRoute';
 
 interface JWTPayload {
     iat: number,
@@ -32,7 +34,7 @@ class JWTService {
         this.KEY = this.loadKey();
     }
     
-    encrypt(obj, options) {
+    encrypt(obj: any, options: JWT.SignOptions) {
         return new Promise<string>((resolve, reject) => {
             JWT.sign(obj, this.KEY, options, (err, token) => {
                 if(err) reject(err);
@@ -52,7 +54,7 @@ class JWTService {
         });
     }
     
-    encryptRouteToken(route) {
+    encryptRouteToken(route: BlankRoute) {
         let payload = {
             question: route.question,
             url: Buffer.from(route.url).toString('base64'),
@@ -63,20 +65,25 @@ class JWTService {
         });
     }
     
-    decrypt<T>(token) {
+    decrypt<T>(token: string) {
         return new Promise<T>((resolve, reject) => {
-            JWT.verify(token, this.KEY, (err, decoded) => {
+            JWT.verify(token, this.KEY, (err: JWT.VerifyErrors, decoded: PromiseLike<T>) => {
                 if(err) reject(err);
                 else resolve(decoded);
             });
         });
     }
 
-    decryptLoginToken(token) {
+    decryptLoginToken(token: string) {
         return this.decrypt<LoginPayload>(token);
     }
 
-    decryptRouteToken(token) {
+    getUserFromToken(token: string) {
+        return this.decryptLoginToken(token)
+        .then(payload => mongoService.getUser(payload.user.username));
+    }
+
+    decryptRouteToken(token: string) {
         return this.decrypt<RoutePayload>(token);
     }
 

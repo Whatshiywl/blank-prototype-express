@@ -6,6 +6,8 @@ import authService from '../services/AuthService';
 import jwtService from '../services/JWTService';
 import User from '../models/User';
 import * as _ from 'lodash';
+import BlankPath from '../models/BlankPath';
+import BlankRoute from '../models/BlankRoute';
 
 class DefaultRouter {
 
@@ -37,11 +39,12 @@ class DefaultRouter {
         
         this.router.post('/post-answer', (req, res) => {
         
-            const sendLevel = level => {
-                let picked = _.pick(level, ['question', 'url']);
-                picked.url = Buffer.from(picked.url).toString('base64');
-                picked['success'] = true;
-                jwtService.encryptRouteToken(picked).then(token => res.send({...{token}, ...picked}))
+            const sendRoute = (route: BlankRoute) => {
+                let picked = {
+                    question: route.question,
+                    url: route.base64Url
+                }
+                jwtService.encryptRouteToken(route).then(token => res.send({...{token}, ...picked}))
                 .catch(err => res.status(500).send(err));
             }
         
@@ -53,86 +56,73 @@ class DefaultRouter {
                 res.status(400).send({err: "No from field on body"});
                 return;
             }
+
+            const testRouteForUser = (user: User) => {
+
+                const success = (path?: BlankPath) => {
+                    let target = path ? path.target : '0';
+                    let routeTo = settingService.getConfig().routes[target];
+                    if(user.isGuest()) return sendRoute(routeTo);
+
+                    let pathUpdateQueries = path ? (path.queries || {}).update : undefined;
+                    let visited = (user.visited || []);
+                    if(visited.indexOf(target) == -1) visited.push(target);
+                    let updateQueries = _.defaultsDeep({ $set: { visited } }, pathUpdateQueries);
+                    mongoService.updateUser(user.username, updateQueries)
+                    .then(() => sendRoute(routeTo))
+                    .catch(err => res.status(500).send(err));
+                }
         
-            if(!token) {
-                res.status(400).send({err: "No token field on body"});
-                return;
+                let route: BlankRoute;
+                if(base64Url == 'login') return success();
+    
+                let plainUrl = Buffer.from(base64Url, 'base64').toString();
+    
+                let id = settingService.getRouteIDByURL(plainUrl);
+                if(!user.visited || user.visited.indexOf(id) == -1) {
+                    res.send({success: false});
+                    return;
+                }
+            
+                route = settingService.getRouteByURL(plainUrl);
+            
+                if(!route) {
+                    res.status(404).send({err: `Route with url ${base64Url} not found`});
+                    return;
+                }
+            
+                let matchingAnswers = _.filter(route.paths, p => {
+                    let regex = new RegExp(p.answer);
+                    let matches = answer.match(regex);
+                    if(!matches) return false;
+                    let matched = matches[0];
+                    return matched == answer;
+                });
+        
+                let ordered = _.orderBy(matchingAnswers, 'index');
+    
+                const testFindQueries = (queries) => {
+                    let passed = true; 
+                    _.forIn(queries, (value, key) => {
+                        let eq = _.get(user, key) == value; 
+                        if(!eq) passed = false; 
+                        return eq;
+                    }); 
+                    return passed;
+                }
+    
+                let path = _.find(ordered, p => !p.queries || testFindQueries(p.queries.find));
+    
+                if(path) success(path);
+                else res.send({success: false});
             }
         
-            jwtService.decryptLoginToken(token)
-            .then(payload => {
-                let username = payload.user.username;
-        
-                mongoService.getUser(username)
-                .then(user => {
-                    if(!user) {
-                        res.status(404).send({err: `No user ${username} found`});
-                        return;
-                    }
-        
-                    let route;
-                    if(base64Url == 'login') {
-                        let visited = (user.visited || []);
-                        if(visited.indexOf('0') == -1) visited.push('0');
-                        mongoService.updateUser(username, { $set: { visited } })
-                        .then(() => {
-                            route = settingService.getConfig().routes['0'];
-                            sendLevel(route);
-                        })
-                        .catch(err => res.status(500).send(err));
-                        return;
-                    }
-        
-                    let plainUrl = Buffer.from(base64Url, 'base64').toString();
-        
-                    let id = settingService.getRouteIDByURL(plainUrl);
-                    if(!user.visited || user.visited.indexOf(id) == -1) {
-                        res.send({success: false});
-                        return;
-                    }
-                
-                    route = settingService.getRouteByURL(plainUrl);
-                
-                    if(!route) {
-                        res.status(404).send({err: `Route with url ${base64Url} not found`});
-                        return;
-                    }
-                
-                    let matchingAnswers = _.filter(route.answers, a => {
-                        let regex = new RegExp(a.answer);
-                        let matches = answer.match(regex);
-                        if(!matches) return false;
-                        let matched = matches[0];
-                        return matched == answer;
-                    });
-            
-                    let ordered = _.orderBy(matchingAnswers, 'index');
-        
-                    const testQueriesOnUser = (user, queries) => {
-                        let passed = true; 
-                        _.forIn(queries, (value, key) => {
-                            let eq = _.get(user, key) == value; 
-                            if(!eq) passed = false; 
-                            return eq;
-                        }); 
-                        return passed;
-                    }
-        
-                    let path = _.find(ordered, p => !p.queries || testQueriesOnUser(user, p.queries.find));
-        
-                    if(path) {
-                        let visited = (user.visited || []);
-                        if(visited.indexOf(path.target) == -1) visited.push(path.target);
-                        let query = _.defaultsDeep({ $set: { visited } }, (path.queries || {}).update);
-                        let level = settingService.getConfig().routes[path.target];
-                        mongoService.updateUser(username, query)
-                        .then(() => sendLevel(level))
-                        .catch(err => res.status(500).send(err));
-                    } else res.send({success: false});
-            
-                }).catch(err => res.status(404).send(err));
-            })
-            .catch(err => res.status(400).send(err));
+            if(!token) testRouteForUser(User.GuestUser);
+            else {
+                jwtService.getUserFromToken(token)
+                .then(testRouteForUser)
+                .catch(err => res.status(400).send(err));
+            }
         
         });
         

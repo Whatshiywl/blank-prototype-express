@@ -3,6 +3,8 @@ import * as CryptoJS from 'crypto-js';
 import * as _ from 'lodash';
 import { FilterQuery, UpdateQuery } from 'mongodb';
 import User from '../models/User';
+import BlankPath from '../models/BlankPath';
+import BlankRoute from '../models/BlankRoute';
 const AES = CryptoJS.AES;
 const encoding = CryptoJS.enc.Utf8;
 
@@ -21,19 +23,7 @@ class SettingService {
         saltTemplate: string,
         entryPoint: number,
         routes: {
-            [key: string]: {
-                question: string,
-                url: string,
-                paths: {
-                    answer: string,
-                    target: string,
-                    queries?: {
-                        find?: FilterQuery<User>,
-                        update?: UpdateQuery<User>
-                    },
-                    index: string
-                }[]
-            }
+            [key: string]: BlankRoute
         }
     };
     pathKeyMap: {[key: string]: any} = {};
@@ -116,10 +106,16 @@ class SettingService {
         }
     }
 
+    private setConfig(parsed: any) {
+        _.forIn(parsed.routes, (route, key) => 
+            parsed.routes[key] = BlankRoute.from(route));
+        this.config = parsed;
+    }
+
     private loadConfig() {
         console.log('Loading Config.json');
         try {
-            this.config = JSON.parse(fs.readFileSync('./Config.json').toString());
+            this.setConfig(JSON.parse(fs.readFileSync('./Config.json').toString()));
             this.encrypt();
         } catch(err) {
             console.log('No Config.json!');
@@ -142,7 +138,7 @@ class SettingService {
             let ciphertext = fs.readFileSync('./Crypted.lock').toString();
             let bytes = AES.decrypt(ciphertext.toString(), this.KEY);
             let plaintext = bytes.toString(encoding);
-            this.config = JSON.parse(plaintext);
+            this.setConfig(JSON.parse(plaintext));
             fs.writeFileSync('./Config.json', JSON.stringify(this.config, null, 4));
         } catch(err) {
             console.log('No Crypted.lock');
