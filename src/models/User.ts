@@ -14,10 +14,10 @@ export default class User {
     at: number | string;
     last: number;
 
-    constructor(credentials?: {username: string, password: string}) {
+    constructor(credentials?: {username: string, hash: string}) {
         this._id = credentials ? credentials.username : 'guest';
         this.username = credentials ? credentials.username : 'guest';
-        this.password = credentials ? credentials.password : '';
+        this.password = credentials ? credentials.hash : '';
         this.score = 0;
         this.visited = [];
         this.current = '';

@@ -35,12 +35,24 @@ class AuthService {
             mongoService.userExists(username)
             .then(data => {
                 if(!data.exists) {
-                    credentials.password = this.hashPassword(credentials.hash);
+                    if (credentials.hash) {
+                        credentials.hash = this.hashPassword(credentials.hash);
+                    } else {
+                        delete credentials.hash;
+                    }
                     mongoService.createUser(credentials)
                     .then(getTokenAndResolve)
                     .catch(reject);
-                } else if(!data.password) getTokenAndResolve();
-                else {
+                } else if(!data.password) {
+                    if (credentials.hash) {
+                        credentials.hash = this.hashPassword(credentials.hash);
+                        mongoService.changeUserPassword(username, credentials.hash)
+                        .then(getTokenAndResolve)
+                        .catch(reject);
+                    } else {
+                        getTokenAndResolve();
+                    }
+                } else {
                     this.validadeCredentials(credentials)
                     .then(getTokenAndResolve)
                     .catch(reject);

@@ -50,7 +50,7 @@ class MongoService {
         });
     }
 
-    createUser(credentials: {username: string, password: string}) {
+    createUser(credentials: {username: string, hash: string}) {
         return new Promise<InsertOneWriteOpResult>((resolve, reject) => {
             if(!credentials || !credentials.username) reject({err: 'Invalid credentials!'});
             else {
@@ -77,7 +77,7 @@ class MongoService {
             this.getCollection(this.USER_COLLECTION)
             .then(users => users.findOne({...{_id: username}, ...filter})
                 .then(user => {
-                    if(!user) reject({err: `No user with name ${username}`});
+                    if(!user) reject(new Error(`No user with name ${username}`));
                     else {
                         users.updateOne({_id: userObj}, {$set: {last: now}})
                         .then(() => resolve(User.from(user)))
@@ -107,10 +107,17 @@ class MongoService {
         return new Promise<UpdateWriteOpResult>((resolve, reject) => {
             this.getCollection(this.USER_COLLECTION)
             .then(users => {
-                users.updateOne({_id: username}, _.defaultsDeep({$set: {last: now}}, query))
+                const updateQuery = _.defaultsDeep({$set: {last: now}}, query);
+                users.updateOne({_id: username}, updateQuery)
                 .then(resolve).catch(reject);
             })
             .catch(reject);
+        });
+    }
+
+    changeUserPassword(userObj: User | string, password: string) {
+        return this.updateUser(userObj, {
+            $set: {password: password}
         });
     }
 
@@ -122,7 +129,13 @@ class MongoService {
                 exists: Boolean(user),
                 password: Boolean(user.password)
             }))
-            .catch(error => error == 'User doesnt exist' ? resolve({exists: false, password: false}) : reject(error));
+            .catch(error => {
+                if (error.message && error.message.startsWith('No user with name')) {
+                    resolve({exists: false, password: false});
+                } else {
+                    reject(error);
+                }
+            });
         });
     }
 
