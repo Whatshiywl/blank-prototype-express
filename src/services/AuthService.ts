@@ -55,7 +55,7 @@ class AuthService {
             mongoService.getUser(name)
             .then(user => {
                 let userPayload = _.pick(user, ['username']);
-                let payload = {...{user: userPayload}, ...data};
+                let payload = {...userPayload, ...data};
                 resolve(jwtService.encryptLoginToken(payload));
             })
             .catch(reject);
