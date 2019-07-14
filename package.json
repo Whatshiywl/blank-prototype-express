@@ -7,7 +7,7 @@
     "npm": "6.2.0"
   },
   "scripts": {
-    "start": "npm i gulp -g && gulp build && npm run serve",
+    "start": "npm i gulp && gulp build && npm run serve",
     "dev": "NODE_ENV=dev node ./bin/www",
     "update": "git pull origin dev && rm Config.json",
     "serve": "node ./dist/bin/www"
