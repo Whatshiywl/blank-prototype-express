@@ -92,7 +92,7 @@ class DefaultRouter {
             let plainUrl = Buffer.from(base64Url, 'base64').toString();
 
             let id = settingService.getRouteIDByURL(plainUrl);
-            if(!user.visited || user.visited.indexOf(id) == -1) {
+            if(!user.isGuest() && (!user.visited || user.visited.indexOf(id) == -1)) {
                 res.send({success: false});
                 return;
             }
