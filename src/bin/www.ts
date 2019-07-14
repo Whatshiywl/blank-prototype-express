@@ -4,22 +4,22 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('blank-prototype:server');
-var http = require('http');
+import App from '../app';
+// var debug = require('debug')('blank-prototype:server');
+import * as http from 'http';
 
 /**
  * Get port from environment and store in Express.
  */
 
 var port = normalizePort(process.env.PORT || '9000');
-app.set('port', port);
+App.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = http.createServer(App);
 
 /**
  * Listen on provided port, on all network interfaces.

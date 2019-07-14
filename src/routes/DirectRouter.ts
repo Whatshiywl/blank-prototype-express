@@ -1,15 +1,15 @@
 var DirectRouter = require('express').Router();
-var moment = require('moment');
-var _ = require('lodash');
+import * as moment from 'moment';
+import * as _ from 'lodash';
 
 var config = require('../services/SettingService').getConfig();
 var levels = config.levels || [];
 var entry = config.entryPoint || 0;
 
-var settingService = require('../services/SettingService');
-var leaderboard = require('../services/LeaderboardService');
-var jwtService = require('../services/JWTService');
-var authService = require('../services/AuthService');
+import settingService from '../services/SettingService';
+import leaderboard from '../services/LeaderboardService';
+import jwtService from '../services/JWTService';
+import authService from '../services/AuthService';
 
 function toRoute(url) {
     return '/' + Buffer.from(url).toString('base64');
@@ -31,13 +31,13 @@ function getHandler(file, obj, id) {
             })
             .catch(error => res.render('error', {error}));
         } else {
-            jwtService.decrypt(token)
+            jwtService.decryptLoginToken(token)
             .then(payload => {
-                let name = payload.user.name;
-                leaderboard.getScore(name)
+                let username = payload.user.username;
+                leaderboard.getScore(username)
                 .then(score => {
                     if(id > score && id < 99) {
-                        leaderboard.setScore(name, id)
+                        leaderboard.setScore(username, id)
                         .then(() => respondWith({token}))
                         .catch(error => res.render('error', {error}));
                     } else respondWith({token});
@@ -59,22 +59,22 @@ function postHandler(answer, from, success, error) {
         let token = req.body.t;
         if(!token) res.redirect('/');
         else {
-            jwtService.decrypt(token)
+            jwtService.decryptLoginToken(token)
             .then(payload => {
-                let userName = payload.user.name;
-                authService.getTokenForUser(userName)
+                let username = payload.user.username;
+                authService.getTokenForUser(username)
                 .then(newToken => {
                     let r = (req.body.r || '').toLowerCase().trim();
                     let match = r.match(answer);
                     let right = match && match[0] === r;
                     let timestamp = moment().format("DD/MM/YY HH:mm:ss");
-                    console.log(userName, from, r, (right ? '=' : '!='), answer);
+                    console.log(username, from, r, (right ? '=' : '!='), answer);
                     if(right) res.redirect(`${success}?token=${newToken}`);
                     else res.redirect(`${error}?token=${newToken}`);
                 })
                 .catch(error => {
-                    console.error(`POST TOKEN Error:`, err.message);
-                    res.redirect(`${error}?token=${newToken}`);
+                    console.error(`POST TOKEN Error:`, error.message);
+                    res.redirect(`${error}?token=${token}`);
                 });
             })
             .catch(error => {
@@ -130,4 +130,4 @@ DirectRouter.post('/login', (req, res) => {
     }
 });
 
-module.exports = DirectRouter;
+export default DirectRouter;
