@@ -1,4 +1,4 @@
-// var DefaultRouter = require('express').Router();
+import { Router, Request, Response } from 'express';
 import leaderboardService from '../services/LeaderboardService';
 import mongoService from '../services/MongoService';
 import settingService from '../services/SettingService';
@@ -11,10 +11,10 @@ import BlankRoute from '../models/BlankRoute';
 
 class DefaultRouter {
 
-    router;
+    router: Router;
 
     constructor() {
-        this.router = require('express').Router();
+        this.router = Router();
 
         this.router.get('/hello', this.getHelloWorld.bind(this));
         
@@ -29,17 +29,17 @@ class DefaultRouter {
         this.router.post('/login', this.postLogin.bind(this));
     }
 
-    getHelloWorld(req, res) {
+    getHelloWorld(req: Request, res: Response) {
         res.send('hello world');
     }
     
-    getLeaderboard(req, res) {
+    getLeaderboard(req: Request, res: Response) {
         leaderboardService.getLeaderboard()
         .then(leaderboard => res.send(leaderboard))
         .catch(err => res.status(err.status).send(err));
     }
     
-    getUserExists(req, res) {
+    getUserExists(req: Request, res: Response) {
         let username = req.query.username;
         if(!username) {
             res.send({exists: false});
@@ -50,7 +50,7 @@ class DefaultRouter {
         .catch(err => res.send(err));
     }
     
-    postAnswer(req, res) {
+    postAnswer(req: Request, res: Response) {
     
         const sendRoute = (route: BlankRoute) => {
             let picked = {
@@ -139,7 +139,7 @@ class DefaultRouter {
     
     }
     
-    getValidateRoute(req, res) {
+    getValidateRoute(req: Request, res: Response) {
         let from = req.query.from;
         let routeToken = req.query['route-token'];
         let token = req.query.token;
@@ -186,7 +186,7 @@ class DefaultRouter {
     
     }
     
-    postLogin(req, res) {
+    postLogin(req: Request, res: Response) {
         let credentials = req.body || {};
         let username = credentials.username;
         if(settingService.isForbiddenName(username)) res.send({err: `${username} is not an allowed name`});
