@@ -80,7 +80,13 @@ class DefaultRouter {
                 let pathUpdateQueries = path ? (path.queries || {}).update : undefined;
                 let visited = (user.visited || []);
                 if(visited.indexOf(target) == -1) visited.push(target);
-                let updateQueries = _.defaultsDeep({ $set: { visited } }, pathUpdateQueries);
+                let updateQueries = _.defaultsDeep({ 
+                    $set: { 
+                        visited,
+                        score: Math.max(+target, user.score || 0),
+                        at: Date.now()
+                    } 
+                }, pathUpdateQueries);
                 mongoService.updateUser(user.username, updateQueries)
                 .then(() => sendRoute(routeTo))
                 .catch(err => res.status(500).send(err));
