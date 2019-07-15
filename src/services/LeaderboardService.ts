@@ -35,7 +35,7 @@ class LeaderboardService {
                 let groups = _.groupBy(scoredUsers, user => user.score);
                 let mapped = _.map(groups, (group, key) => {
                     let ordered = _.map(_.orderBy(group, 'at'), user => {
-                        user.at = moment.utc(user.at).format('DD/MM/YY HH:mm:ss');
+                        user.at = moment.utc(user.at).format('DD/MM/YYYY HH:mm:ss');
                         return user;
                     });
                     return {ordered, key}
@@ -44,7 +44,7 @@ class LeaderboardService {
 
                 let zeroUsers = users.filter(user => user.score == 0);
                 let newest = _.map(_.orderBy(zeroUsers, 'at', 'desc'), user => {
-                    user.at = moment.utc(user.at).format('DD/MM/YY HH:mm:ss');
+                    user.at = moment.utc(user.at).format('DD/MM/YYYY HH:mm:ss');
                     return user;
                 });
                 resolve({leaders, newest});
